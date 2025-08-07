@@ -1,7 +1,7 @@
 {
     # App information
     'name': "Magento 2 Extended Bundle Products Order EPT",
-    'version': '17.0.0.1',
+    'version': '18.0.0.1',
     'category': 'Sales',
     'license': 'OPL-1',
     'summary': 'Odoo Magento 2 Extended EPT module helps you import the bundle product order from'
