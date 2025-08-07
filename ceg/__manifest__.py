@@ -18,10 +18,13 @@
     # for the full list
     'category': 'Account',
     # any module necessary for this one to work correctly
-    'depends': ['whatsapp', 'odoo_magento2_ept' ],
+    'depends': ['whatsapp', 'odoo_magento2_ept', 'purchase', 'sale', 'sale_purchase'],
     # always loaded
     'data': [
-   ],
+        'security/ir.model.access.csv',
+        'views/purchase_advance_payment_inv_views.xml',
+        'views/purchase_order_views.xml',
+    ],
     'installable': True,
     'auto_install': True,
     'application': True,
