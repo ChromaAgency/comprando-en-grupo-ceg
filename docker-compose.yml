@@ -1,0 +1,18 @@
+services:
+  web:
+    image: odoo:18.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    command: odoo --dev all -c /etc/odoo/odoo.conf -s 
+    volumes:
+      - ./config:/etc/odoo
+      - ./:/mnt/extra-addons
+      - ${ENTERPRISE_PATH}:/mnt/enterprise-addons
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
