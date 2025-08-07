@@ -14,6 +14,25 @@ class SaleOrder(models.Model):
         ], string='Estado de Magento')
     
 
+    def write(self, vals):
+        """
+        Sobrescribe el método write para enviar el estado a Magento al actualizar la orden.
+        """
+        res = super(SaleOrder, self).write(vals)
+        
+        # Si se actualiza el estado de Magento, enviarlo automáticamente
+        if 'magento_state' in vals:
+            for record in self:
+                if record.magento_state and record._get_magento_instance():
+                    mapping = {
+                        'impo_local_shipping': 'impo_local_shipping',
+                        'delivered': 'Entregado',
+                    }
+                    record.send_status_to_magento(record.magento_state)
+        
+        return res
+
+
     def _get_magento_instance(self):
         """
         Sobrescribe el método para obtener la instancia de Magento directamente.

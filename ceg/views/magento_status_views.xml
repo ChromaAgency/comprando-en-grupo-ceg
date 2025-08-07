@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Vista tree para Sale Order con estado de Magento -->
+    <record id="view_sale_order_tree_magento" model="ir.ui.view">
+        <field name="name">sale.order.tree.magento</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="magento_state" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Vista form para Sale Order con estado de Magento -->
+    <record id="view_sale_order_form_magento" model="ir.ui.view">
+        <field name="name">sale.order.form.magento</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <field name="magento_state" widget="statusbar" clickable="True"/>
+            </header>
+        </field>
+    </record>
+
+    <!-- Vista tree para Purchase Order con estado de Magento -->
+    <record id="view_purchase_order_tree_magento" model="ir.ui.view">
+        <field name="name">purchase.order.tree.magento</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="magento_state" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Vista form para Purchase Order con estado de Magento -->
+    <record id="view_purchase_order_form_magento" model="ir.ui.view">
+        <field name="name">purchase.order.form.magento</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <field name="magento_state" widget="statusbar" clickable="True"/>
+            </header>
+        </field>
+    </record>
+
+</odoo>
