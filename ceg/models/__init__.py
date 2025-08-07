@@ -1,1 +1,1 @@
-from . import discuss_channel, whatsapp_account, purchase_order
+from . import discuss_channel, whatsapp_account, purchase_order, magento_status_sender_mixin, sale_order, account_move, stock_picking

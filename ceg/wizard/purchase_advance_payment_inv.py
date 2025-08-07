@@ -120,6 +120,7 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                             invoice._get_html_link(title=_("Invoice"))
                         )
                     )
+            self.purchase_order_ids.action_send_purchase_status_to_magento()
         
         if not created_invoices:
             raise UserError(_('No advance payment invoices were created. Please verify that the purchase orders have related sale orders.'))
