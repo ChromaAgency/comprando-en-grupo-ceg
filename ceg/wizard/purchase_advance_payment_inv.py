@@ -10,12 +10,17 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
 
     purchase_order_ids = fields.Many2many(
         'purchase.order', 
-        default=lambda self: self.env.context.get('active_ids')
+        default=lambda self: self.env.context.get('active_ids') or self.ids
     )
     count = fields.Integer(string="Purchase Order Count", compute='_compute_count')
     sale_order_total = fields.Monetary(
         string="Sale Order Total", 
         compute='_compute_sale_order_total'
+    )
+    percentage = fields.Float(
+        string="Percentage",
+        default=1.0,
+        help="Percentage of the sale order amount to be invoiced as advance payment"
     )
     currency_id = fields.Many2one(
         comodel_name='res.currency',
@@ -39,13 +44,7 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
     def _compute_sale_order_total(self):
         for wizard in self:
             total = 0.0
-            sale_orders = self.env['sale.order']
-            for po in wizard.purchase_order_ids:
-                # Obtener las órdenes de venta relacionadas a través de las líneas de compra
-                # que están vinculadas a líneas de venta
-                for po_line in po.order_line:
-                    if po_line.sale_line_id:
-                        sale_orders |= po_line.sale_line_id.order_id
+            sale_orders = self.purchase_order_ids._get_sale_orders()
             
             # Eliminar duplicados y sumar totales
             for so in sale_orders:
@@ -68,6 +67,12 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             else:
                 wizard.company_id = False
 
+    @api.constrains('percentage')
+    def _check_percentage(self):
+        for wizard in self:
+            if wizard.percentage <= 0 or wizard.percentage > 1:
+                raise UserError(_('Percentage must be between 1 and 100.'))
+
     #=== ACTION METHODS ===#
 
     def create_sale_advance_payments(self):
@@ -78,13 +83,7 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             raise UserError(_('No purchase orders selected.'))
         
         created_invoices = self.env['account.move']
-        sale_orders = self.env['sale.order']
-        
-        # Recopilar todas las órdenes de venta relacionadas
-        for po in self.purchase_order_ids:
-            for po_line in po.order_line:
-                if po_line.sale_line_id:
-                    sale_orders |= po_line.sale_line_id.order_id
+        sale_orders = self.purchase_order_ids._get_sale_orders()
         
         # Filtrar solo órdenes confirmadas
         sale_orders = sale_orders.filtered(lambda so: so.state in ('sale', 'done'))
@@ -96,7 +95,7 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             # Crear el wizard de anticipo de venta
             advance_wizard = self.env['sale.advance.payment.inv'].create({
                 'advance_payment_method': 'percentage',
-                'amount': 100.0,  # 100% del total de la venta
+                'amount': self.percentage*100,  # Usar el porcentaje configurado en el wizard
                 'sale_order_ids': [(4, sale_order.id)],
             })
             
@@ -115,8 +114,9 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                 )
                 for po in related_pos:
                     po.message_post(
-                        body=_("Advance payment invoice created for related sale order %s: %s") % (
-                            sale_order.name, 
+                        body=_("Advance payment invoice created for related sale order %s (%.1f%%): %s") % (
+                            sale_order.name,
+                            self.percentage,
                             invoice._get_html_link(title=_("Invoice"))
                         )
                     )
@@ -143,25 +143,3 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                 'domain': [('id', 'in', created_invoices.ids)],
                 'target': 'current',
             }
-
-    def get_related_sale_orders(self):
-        """Obtener información de las órdenes de venta relacionadas"""
-        self.ensure_one()
-        sale_orders_info = []
-        sale_orders = self.env['sale.order']
-        
-        for po in self.purchase_order_ids:
-            for po_line in po.order_line:
-                if po_line.sale_line_id:
-                    sale_orders |= po_line.sale_line_id.order_id
-        
-        for so in sale_orders:
-            sale_orders_info.append({
-                'order': so,
-                'name': so.name,
-                'partner': so.partner_id.name,
-                'amount_total': so.amount_total,
-                'state': so.state,
-            })
-        
-        return sale_orders_info

@@ -14,22 +14,6 @@ _logger = logging.getLogger(__name__)
 
 class MexicanDocumentsController(http.Controller):
 
-    def _validate_api_key(self, api_key):
-        """Valida el API key utilizando el módulo auth_api_key"""
-        if not api_key:
-            raise Unauthorized(_("API key is required"))
-        
-        try:
-            auth_api_key_model = request.env['auth.api.key'].sudo()
-            api_key_record = auth_api_key_model._retrieve_api_key(api_key)
-            if not api_key_record:
-                raise Unauthorized(_("Invalid API key"))
-            
-            # Cambiar al usuario asociado con la API key
-            request.uid = api_key_record.user_id.id
-            return api_key_record
-        except (AccessError, ValidationError) as e:
-            raise Unauthorized(_("Invalid API key: %s") % str(e))
 
     def _get_sale_order_by_magento_ref(self, magento_order_ref):
         """Obtiene la orden de venta por referencia de Magento"""
@@ -41,8 +25,10 @@ class MexicanDocumentsController(http.Controller):
             # Buscar también por nombre o referencia interna
             sale_order = request.env['sale.order'].sudo().search([
                 '|',
+                '|',
                 ('name', 'ilike', magento_order_ref),
-                ('origin', '=', magento_order_ref)
+                ('origin', '=', magento_order_ref),
+                ('client_order_ref', 'ilike', magento_order_ref)
             ], limit=1)
             
         if not sale_order:
@@ -52,46 +38,33 @@ class MexicanDocumentsController(http.Controller):
 
     def _get_mexican_documents_for_sale(self, sale_order):
         """Obtiene los documentos mexicanos relacionados a una venta"""
-        documents = {}
-        
         # 1. Facturas (account.move con documentos CFDI)
         invoices = sale_order.invoice_ids.filtered(lambda inv: inv.state == 'posted')
         cfdi_invoices = []
+        base_url = request.httprequest.host_url.rstrip('/')
         for invoice in invoices:
-            if hasattr(invoice, 'l10n_mx_edi_cfdi_attachment_id') and invoice.l10n_mx_edi_cfdi_attachment_id:
-                cfdi_invoices.append({
-                    'id': invoice.id,
-                    'name': invoice.name,
-                    'amount_total': invoice.amount_total,
-                    'cfdi_uuid': getattr(invoice, 'l10n_mx_edi_cfdi_uuid', ''),
-                    'cfdi_state': getattr(invoice, 'l10n_mx_edi_cfdi_state', ''),
-                })
-        
+            cfdi_invoices.append({
+                'name': f"Factura anticipo {invoice.name}",
+                'url': f"{base_url}/api/mexican-documents/pdf/invoice/{invoice.id}"
+            })
+
         # 2. Complementos de pago (account.payment con documentos CFDI)
         payments = sale_order.invoice_ids.mapped('payment_ids')
         cfdi_payments = []
         for payment in payments:
-            if hasattr(payment, 'l10n_mx_edi_cfdi_attachment_id') and payment.l10n_mx_edi_cfdi_attachment_id:
-                cfdi_payments.append({
-                    'id': payment.id,
-                    'name': payment.name,
-                    'amount': payment.amount,
-                    'cfdi_uuid': getattr(payment, 'l10n_mx_edi_cfdi_uuid', ''),
-                    'cfdi_state': getattr(payment, 'l10n_mx_edi_cfdi_state', ''),
-                })
-        
+            cfdi_payments.append({
+                'name': f"Complemento de pago {payment.name}",
+                'url': f"{base_url}/api/mexican-documents/pdf/payment/{payment.id}"
+            })
+
         # 3. Facturas de traslado (stock.picking con documentos CFDI)
         pickings = sale_order.picking_ids.filtered(lambda p: p.state == 'done')
         cfdi_pickings = []
         for picking in pickings:
-            # Buscar si tiene documento CFDI de traslado
-            if hasattr(picking, 'l10n_mx_edi_cfdi_attachment_id') and picking.l10n_mx_edi_cfdi_attachment_id:
-                cfdi_pickings.append({
-                    'id': picking.id,
-                    'name': picking.name,
-                    'cfdi_uuid': getattr(picking, 'l10n_mx_edi_cfdi_uuid', ''),
-                    'cfdi_state': getattr(picking, 'l10n_mx_edi_cfdi_state', ''),
-                })
+            cfdi_pickings.append({
+                'name': f"Factura de traslado {picking.name}",
+                'url': f"{base_url}/api/mexican-documents/pdf/transfer/{picking.id}"
+            })
         
         documents = {
             'sale_order': {
@@ -108,13 +81,11 @@ class MexicanDocumentsController(http.Controller):
         return documents
 
     @http.route('/api/mexican-documents/<string:magento_order_ref>', 
-                type='json', auth='none', methods=['GET'], csrf=False)
+                type='http', auth='none', methods=['GET'], csrf=False)
     def get_mexican_documents_urls(self, magento_order_ref, **kw):
         """Endpoint para obtener las URLs de documentos mexicanos por referencia de Magento"""
         try:
-            # Validar API key
-            api_key = request.httprequest.headers.get('X-API-Key')
-            self._validate_api_key(api_key)
+            
             
             # Buscar orden de venta
             sale_order = self._get_sale_order_by_magento_ref(magento_order_ref)
@@ -122,39 +93,25 @@ class MexicanDocumentsController(http.Controller):
             # Obtener documentos mexicanos
             documents = self._get_mexican_documents_for_sale(sale_order)
             
-            # Generar URLs para cada documento
-            base_url = request.httprequest.host_url.rstrip('/')
             
-            # URLs para facturas
-            for invoice in documents['invoices']:
-                invoice['pdf_url'] = f"{base_url}/api/mexican-documents/pdf/invoice/{invoice['id']}"
-            
-            # URLs para complementos de pago
-            for payment in documents['payments']:
-                payment['pdf_url'] = f"{base_url}/api/mexican-documents/pdf/payment/{payment['id']}"
-            
-            # URLs para documentos de traslado
-            for picking in documents['transfer_documents']:
-                picking['pdf_url'] = f"{base_url}/api/mexican-documents/pdf/transfer/{picking['id']}"
-            
-            return {
+            return http.Response(json.dumps({
                 'success': True,
                 'data': documents
-            }
+            }))
             
         except (Unauthorized, NotFound) as e:
-            return {
+            return http.Response(json.dumps({
                 'success': False,
                 'error': str(e),
                 'code': e.code if hasattr(e, 'code') else 400
-            }
+            }))
         except Exception as e:
             _logger.error("Error getting Mexican documents: %s", str(e))
-            return {
+            return http.Response(json.dumps({
                 'success': False,
                 'error': _("Internal server error"),
                 'code': 500
-            }
+            }))
 
     @http.route('/api/mexican-documents/pdf/invoice/<int:invoice_id>', 
                 type='http', auth='none', methods=['GET'], csrf=False)

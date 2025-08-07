@@ -8,17 +8,19 @@
             <form string="Create Advance Payment for Sale Orders">
                 <group>
                     <group>
+                        <field name="purchase_order_ids" widget="many2many_tags" options="{'no_create': True}" context="{'default_state': 'purchase'}"/>
                         <field name="count" string="Purchase Orders Selected"/>
                         <field name="sale_order_total" string="Total Sale Orders Amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                     </group>
                     <group>
+                        <field name="percentage" string="Advance Payment Percentage (%)" widget="percentage"/>
                         <field name="currency_id" invisible="1"/>
                         <field name="company_id" invisible="1"/>
                     </group>
                 </group>
                 
                 <group string="Information">
-                    <p>This wizard will create advance payment invoices for <b>100% of the total amount</b> of each sale order related to the selected purchase orders.</p>
+                    <p>This wizard will create advance payment invoices for the <b>specified percentage</b> of the total amount of each sale order related to the selected purchase orders.</p>
                     <p><b>Note:</b> Only confirmed sale orders (in 'Sale Order' or 'Locked' state) will be processed.</p>
                 </group>
                 

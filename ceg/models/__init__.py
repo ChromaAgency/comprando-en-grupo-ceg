@@ -1,1 +1,1 @@
-from . import discuss_channel, whatsapp_account, purchase_order, mexican_document_token
+from . import discuss_channel, whatsapp_account, purchase_order
