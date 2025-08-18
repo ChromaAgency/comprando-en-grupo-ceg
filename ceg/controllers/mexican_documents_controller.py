@@ -45,7 +45,7 @@ class MexicanDocumentsController(http.Controller):
         for invoice in invoices:
             cfdi_invoices.append({
                 'name': f"Factura anticipo {invoice.name}",
-                'url': f"{base_url}/api/mexican-documents/pdf/invoice/{invoice.id}"
+                'url': f"{base_url}/api/mexican-documents/pdf/invoice/{invoice.id}.pdf?access_token={invoice.access_token}"
             })
 
         # 2. Complementos de pago (account.payment con documentos CFDI)
@@ -54,7 +54,7 @@ class MexicanDocumentsController(http.Controller):
         for payment in payments:
             cfdi_payments.append({
                 'name': f"Complemento de pago {payment.name}",
-                'url': f"{base_url}/api/mexican-documents/pdf/payment/{payment.id}"
+                'url': f"{base_url}/api/mexican-documents/pdf/payment/{payment.id}.pdf?access_token={payment.move_id.access_token}"
             })
 
         # 3. Facturas de traslado (stock.picking con documentos CFDI)
@@ -63,7 +63,7 @@ class MexicanDocumentsController(http.Controller):
         for picking in pickings:
             cfdi_pickings.append({
                 'name': f"Factura de traslado {picking.name}",
-                'url': f"{base_url}/api/mexican-documents/pdf/transfer/{picking.id}"
+                'url': f"{base_url}/api/mexican-documents/pdf/transfer/{picking.id}.pdf?access_token={picking.sale_id.access_token}"
             })
         
         documents = {
@@ -85,8 +85,13 @@ class MexicanDocumentsController(http.Controller):
     def get_mexican_documents_urls(self, magento_order_ref, **kw):
         """Endpoint para obtener las URLs de documentos mexicanos por referencia de Magento"""
         try:
-            
-            
+            # TODO: Add .pdf - Done
+            # TODO: Add access unique token 
+            # TODO: replicar los tipos de cambio de trade unity que me envia martin
+            # TODO: REvisar que pedido de venta no tenga el anticipo 1. - Done
+            # TODO: En producción no deberia mandarse.  - Done
+            # TODO: Impo pre local prep no deberia mandarse. - Done
+
             # Buscar orden de venta
             sale_order = self._get_sale_order_by_magento_ref(magento_order_ref)
             
@@ -113,20 +118,24 @@ class MexicanDocumentsController(http.Controller):
                 'code': 500
             }))
 
-    @http.route('/api/mexican-documents/pdf/invoice/<int:invoice_id>', 
+    def _validate_access_token(self, record, token):
+        """Validates the access token for the given record."""
+        if not token or not hasattr(record, 'access_token') or not record.access_token:
+            raise Unauthorized(_("Missing or invalid access token"))
+        if token != record.access_token:
+            raise Unauthorized(_("Invalid access token"))
+
+    @http.route('/api/mexican-documents/pdf/invoice/<int:invoice_id>.pdf', 
                 type='http', auth='none', methods=['GET'], csrf=False)
-    def get_invoice_pdf(self, invoice_id, **kw):
+    def get_invoice_pdf(self, invoice_id, access_token=None,  **kw):
         """Endpoint para obtener el PDF de una factura CFDI"""
         try:
-            # Validar API key
-            api_key = request.httprequest.args.get('api_key') or request.httprequest.headers.get('X-API-Key')
-            self._validate_api_key(api_key)
-            
-            # Buscar factura
+            # Validar access token
             invoice = request.env['account.move'].sudo().browse(invoice_id)
             if not invoice.exists() or invoice.move_type not in ('out_invoice', 'out_refund'):
                 raise NotFound(_("Invoice not found"))
-            
+            self._validate_access_token(invoice, access_token)
+
             # Verificar que tenga documento CFDI
             if not hasattr(invoice, 'l10n_mx_edi_cfdi_attachment_id') or not invoice.l10n_mx_edi_cfdi_attachment_id:
                 raise NotFound(_("CFDI document not found for this invoice"))
@@ -161,20 +170,18 @@ class MexicanDocumentsController(http.Controller):
                 headers=[('Content-Type', 'application/json')]
             )
 
-    @http.route('/api/mexican-documents/pdf/payment/<int:payment_id>', 
+    @http.route('/api/mexican-documents/pdf/payment/<int:payment_id>.pdf', 
                 type='http', auth='none', methods=['GET'], csrf=False)
-    def get_payment_pdf(self, payment_id, **kw):
+    def get_payment_pdf(self, payment_id, access_token=None, **kw):
         """Endpoint para obtener el PDF de un complemento de pago CFDI"""
         try:
-            # Validar API key
-            api_key = request.httprequest.args.get('api_key') or request.httprequest.headers.get('X-API-Key')
-            self._validate_api_key(api_key)
             
-            # Buscar pago
+            access_token = request.httprequest.args.get('access_token') or request.httprequest.headers.get('X-Access-Token')
             payment = request.env['account.payment'].sudo().browse(payment_id)
             if not payment.exists():
                 raise NotFound(_("Payment not found"))
-            
+            self._validate_access_token(payment.move_id, access_token)
+
             # Verificar que tenga documento CFDI
             if not hasattr(payment, 'l10n_mx_edi_cfdi_attachment_id') or not payment.l10n_mx_edi_cfdi_attachment_id:
                 raise NotFound(_("CFDI document not found for this payment"))
@@ -209,20 +216,17 @@ class MexicanDocumentsController(http.Controller):
                 headers=[('Content-Type', 'application/json')]
             )
 
-    @http.route('/api/mexican-documents/pdf/transfer/<int:picking_id>', 
+    @http.route('/api/mexican-documents/pdf/transfer/<int:picking_id>.pdf', 
                 type='http', auth='none', methods=['GET'], csrf=False)
-    def get_transfer_pdf(self, picking_id, **kw):
+    def get_transfer_pdf(self, picking_id, access_token=None,  **kw):
         """Endpoint para obtener el PDF de un documento de traslado CFDI"""
         try:
-            # Validar API key
-            api_key = request.httprequest.args.get('api_key') or request.httprequest.headers.get('X-API-Key')
-            self._validate_api_key(api_key)
-            
-            # Buscar picking
+            # Validar access token
             picking = request.env['stock.picking'].sudo().browse(picking_id)
             if not picking.exists():
                 raise NotFound(_("Transfer document not found"))
-            
+            self._validate_access_token(picking.sale_id, access_token)
+
             # Verificar que tenga documento CFDI
             if not hasattr(picking, 'l10n_mx_edi_cfdi_attachment_id') or not picking.l10n_mx_edi_cfdi_attachment_id:
                 raise NotFound(_("CFDI document not found for this transfer"))
@@ -256,3 +260,4 @@ class MexicanDocumentsController(http.Controller):
                 status=500,
                 headers=[('Content-Type', 'application/json')]
             )
+

@@ -18,8 +18,89 @@ class MagentoStatusSenderMixin(models.AbstractModel):
     _name = 'magento.status.sender.mixin'
     _description = 'Magento Status Sender Mixin'
 
+    def _build_administrative_status_request_data(self, status):
+        """
+        Construye los datos de la petición para enviar a Magento.
+        Este método debe ser sobrescrito en cada modelo que use el mixin.
+        
+        :param status: Estado a enviar
+        :type status: str
+        :return: Tupla con (url, headers, data)
+        :rtype: tuple
+        """
+        self.ensure_one()
+        
+        # Obtener instancia de Magento
+        magento_instance = self._get_magento_instance()
+        if not magento_instance:
+            raise UserError(_("No se encontró instancia de Magento para este registro"))
+        
+        # Obtener token de acceso
+        instance_token = magento_instance.access_token
+        if not instance_token:
+            raise UserError(_("Token de acceso no configurado en la instancia de Magento"))
+        
+        # Construir headers
+        headers = self._get_headers(instance_token)
+        
+        # Obtener URL base y ID de orden
+        instance_url = magento_instance.magento_url
+        if not instance_url:
+            raise UserError(_("URL de Magento no configurada en la instancia"))
+        
+        # Obtener ID de orden de Magento
+        magento_order_id = self._get_magento_order_id()
+        if not magento_order_id:
+            raise UserError(_("ID de orden de Magento no encontrado para este registro"))
+        
+        # Construir URL del endpoint
+        url = f"{instance_url}/rest/V1/orders/{magento_order_id}"
+        
+        # Construir datos del request
+        data = json.dumps({
+            "entity": {
+                "entity_id": magento_order_id,
+                "extension_attributes": {
+                    "administrative_status": status
+                }
+            }
+        })
+        
+        return url, headers, data
+    def _log_message(self, message, post_to_chatter=True):
+        """
+        Registra un mensaje de error en el log.
+        
+        :param message: Mensaje de error a registrar
+        :type message: str
+        """
+        _logger.error(message)
+        if post_to_chatter and hasattr(self, 'message_post'):
+            self.message_post(body=message)
+
     def send_administrative_status_to_magento(self, status):
-        ...
+        """
+        Envía un estado a Magento para el registro actual.
+        
+        :param status: Estado a enviar a Magento
+        :type status: str
+        :return: True si se envió correctamente, False en caso contrario
+        :rtype: bool
+        """
+        for rec in self:
+            try:
+                url, headers, data = rec._build_administrative_status_request_data(status)
+                response = requests.post(url, headers=headers, data=data)
+                
+                if response.status_code != 200:
+                    rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % status, rec._name, rec.id, response.status_code, response.text)
+                    return False
+                rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % status, rec._name, rec.id)
+                return True
+                
+            except Exception as e:
+                rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % status, rec._name, rec.id, str(e))
+                return False
 
 
     def send_status_to_magento(self, status):
@@ -33,28 +114,17 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                url, headers, data = rec._build_request_data(status)
+                url, headers, data = rec._build_status_request_data(status)
                 response = requests.post(url, headers=headers, data=data)
                 
                 if response.status_code != 200:
-                    _logger.error(
-                        "Error al enviar el estado '%s' a Magento para %s ID %s. "
-                        "Status code: %s. Response: %s",
-                        status, rec._name, rec.id, response.status_code, response.text
-                    )
+                    rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % status, rec._name, rec.id, response.status_code, response.text)
                     return False
-                
-                _logger.info(
-                    "Estado '%s' enviado exitosamente a Magento para %s ID %s",
-                    status, rec._name, rec.id
-                )
+                rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % status, rec._name, rec.id)
                 return True
                 
             except Exception as e:
-                _logger.error(
-                    "Excepción al enviar estado '%s' a Magento para %s ID %s: %s",
-                    status, rec._name, rec.id, str(e)
-                )
+                rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % status, rec._name, rec.id, str(e))
                 return False
 
     def _build_status_request_data(self, status):
@@ -200,6 +270,31 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         
         for record in self:
             if record.send_status_to_magento(status):
+                successful_records |= record
+            else:
+                failed_records |= record
+        
+        return {
+            'successful': successful_records,
+            'failed': failed_records,
+            'success_count': len(successful_records),
+            'failed_count': len(failed_records)
+        }
+
+    def batch_send_admin_status_to_magento(self, status):
+        """
+        Envía estado a Magento para múltiples registros de forma eficiente.
+        
+        :param status: Estado a enviar
+        :type status: str
+        :return: Diccionario con resultados de envío
+        :rtype: dict
+        """
+        successful_records = self.env[self._name]
+        failed_records = self.env[self._name]
+        
+        for record in self:
+            if record.send_administrative_status_to_magento(status):
                 successful_records |= record
             else:
                 failed_records |= record

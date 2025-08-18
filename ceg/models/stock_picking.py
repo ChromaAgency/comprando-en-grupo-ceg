@@ -47,22 +47,3 @@ class StockPicking(models.Model):
         
         return False
 
-    def _get_status_comment(self, status):
-        """
-        Personaliza el comentario para entregas.
-        """
-        picking_type_name = self.picking_type_id.name if self.picking_type_id else "Transferencia"
-        return f"Estado de {picking_type_name.lower()} actualizado: {status} (Transferencia: {self.name})"
-
-    def action_done(self):
-        """
-        Sobrescribe el método para enviar automáticamente el estado a Magento.
-        """
-        result = super().action_done()
-        
-        # Enviar estado a Magento si está configurado
-        for picking in self:
-            if picking._get_magento_instance() and picking._get_magento_order_id() and picking.picking_type_id.code == 'outgoing':
-                picking.send_status_to_magento('impo_pre_local_prep')
-        
-        return result

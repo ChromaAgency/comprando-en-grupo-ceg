@@ -14,6 +14,7 @@ class PurchaseOrder(models.Model):
             ('in_customs', 'En aduanas'),
         ],
         string='State',
+        default="in_prod",
         help='State of the order in Magento'
     )
     def write(self, vals):
@@ -29,7 +30,7 @@ class PurchaseOrder(models.Model):
                     'in_transit': 'impo_shipped',
                     'in_customs': 'impo_ua_clearence',
                 }
-                self.send_status_to_magento(status)
+                self.send_status_to_magento(status_mapping.get(status))
         return res
 
     def _get_magento_instance(self):

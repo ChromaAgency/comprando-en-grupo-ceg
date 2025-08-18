@@ -92,6 +92,8 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             raise UserError(_('No confirmed sale orders found related to the selected purchase orders.'))
                 
         for sale_order in sale_orders:
+            if sale_order.invoice_ids > 0:
+                continue
             # Crear el wizard de anticipo de venta
             advance_wizard = self.env['sale.advance.payment.inv'].create({
                 'advance_payment_method': 'percentage',

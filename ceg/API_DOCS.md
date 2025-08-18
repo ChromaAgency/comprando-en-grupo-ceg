@@ -4,7 +4,7 @@
 
 Esta API permite obtener documentos fiscales mexicanos (CFDI) asociados a órdenes de venta de Magento, incluyendo:
 - Facturas CFDI
-- Complementos de pago CFDI  
+- Complementos de pago CFDI
 - Documentos de traslado CFDI
 
 ## Autenticación
@@ -24,7 +24,7 @@ Todos los endpoints requieren autenticación mediante API Key del módulo `auth_
 **Descripción**: Obtiene las URLs de todos los documentos CFDI asociados a una orden de venta de Magento.
 
 **Parámetros**:
-- `magento_order_ref` (string): Referencia de la orden en Magento
+- `magento_order_ref` (string): Referencia de la orden en Magento. Se busca por `client_order_ref`, y si no se encuentra, por `name`, `origin` o coincidencia parcial.
 
 **Headers**:
 ```
@@ -45,31 +45,20 @@ Content-Type: application/json
     },
     "invoices": [
       {
-        "id": 456,
-        "name": "INV/2024/001",
-        "amount_total": 1500.00,
-        "cfdi_uuid": "12345678-1234-1234-1234-123456789012",
-        "cfdi_state": "sent",
-        "pdf_url": "https://tu-dominio.com/api/mexican-documents/pdf/invoice/456"
+        "name": "Factura anticipo INV/2024/001",
+        "url": "https://tu-dominio.com/api/mexican-documents/pdf/invoice/456.pdf"
       }
     ],
     "payments": [
       {
-        "id": 789,
-        "name": "PAY/2024/001",
-        "amount": 1500.00,
-        "cfdi_uuid": "12345678-1234-1234-1234-123456789013",
-        "cfdi_state": "sent",
-        "pdf_url": "https://tu-dominio.com/api/mexican-documents/pdf/payment/789"
+        "name": "Complemento de pago PAY/2024/001",
+        "url": "https://tu-dominio.com/api/mexican-documents/pdf/payment/789.pdf"
       }
     ],
     "transfer_documents": [
       {
-        "id": 101112,
-        "name": "PICK/2024/001",
-        "cfdi_uuid": "12345678-1234-1234-1234-123456789014",
-        "cfdi_state": "sent",
-        "pdf_url": "https://tu-dominio.com/api/mexican-documents/pdf/transfer/101112"
+        "name": "Factura de traslado PICK/2024/001",
+        "url": "https://tu-dominio.com/api/mexican-documents/pdf/transfer/101112.pdf"
       }
     ]
   }
@@ -87,7 +76,7 @@ Content-Type: application/json
 
 ### 2. Descargar PDF de factura
 
-**Endpoint**: `GET /api/mexican-documents/pdf/invoice/{invoice_id}`
+**Endpoint**: `GET /api/mexican-documents/pdf/invoice/{invoice_id}.pdf`
 
 **Descripción**: Descarga el PDF del CFDI de una factura específica.
 
@@ -100,18 +89,29 @@ Content-Type: application/json
 
 **Respuesta exitosa (200)**:
 - Content-Type: `application/pdf`
-- Content-Disposition: `attachment; filename="factura.pdf"`
+- Content-Disposition: `attachment; filename="NOMBRE_DEL_PDF.pdf"`
 - Contenido: Datos binarios del PDF
+
+**Errores**:
+- 404 si la factura no existe o no tiene CFDI
+- 401 si la API key es inválida
 
 ### 3. Descargar PDF de complemento de pago
 
-**Endpoint**: `GET /api/mexican-documents/pdf/payment/{payment_id}`
+**Endpoint**: `GET /api/mexican-documents/pdf/payment/{payment_id}.pdf`
 
 **Descripción**: Descarga el PDF del CFDI de un complemento de pago específico.
 
 **Parámetros**:
 - `payment_id` (int): ID del pago en Odoo
 
+**Autenticación**:
+- Header: `X-API-Key: tu_api_key`
+- Query param: `?api_key=tu_api_key`
+
+**Respuesta exitosa (200)**:
+- Content-Type: `application/pdf`
+- Content-Disposition: `attachment; filename="NOMBRE_DEL_PDF.pdf"`
 **Autenticación**:
 - Header: `X-API-Key: tu_api_key`
 - Query param: `?api_key=tu_api_key`

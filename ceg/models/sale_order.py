@@ -11,7 +11,8 @@ class SaleOrder(models.Model):
         selection=[
             ('impo_local_shipping', 'Entrega Local'),
             ('delivered', 'Entregado'),
-        ], string='Estado de Magento')
+        ],
+        string='Estado de Magento')
     
 
     def write(self, vals):
@@ -28,7 +29,7 @@ class SaleOrder(models.Model):
                         'impo_local_shipping': 'impo_local_shipping',
                         'delivered': 'Entregado',
                     }
-                    record.send_status_to_magento(record.magento_state)
+                    record.send_status_to_magento(mapping.get(record.magento_state))
         
         return res
 
