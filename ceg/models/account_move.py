@@ -33,13 +33,25 @@ class AccountMove(models.Model):
         Acción específica para enviar estado de compra a Magento.
         """
 
-        return self.send_administrative_status_to_magento('in_debt')
+        return self.send_administrative_status_to_magento('1')
+    
+    def action_send_due_debt_status_to_magento(self):
+        """
+        Acción específica para enviar estado de compra a Magento.
+        """
+        return self.send_administrative_status_to_magento('2')
     
     def action_send_no_debt_status_to_magento(self):
         """
         Acción específica para enviar estado de compra a Magento.
         """
-        return self.send_administrative_status_to_magento('no_debt')
+        return self.send_administrative_status_to_magento('0')
+
+    def action_send_cancelled_status_to_magento(self):
+        """
+        Acción específica para enviar estado de compra a Magento.
+        """
+        return self.send_administrative_status_to_magento('3')
 
     def _get_magento_instance(self):
         """

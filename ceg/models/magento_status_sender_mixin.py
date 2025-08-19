@@ -54,14 +54,14 @@ class MagentoStatusSenderMixin(models.AbstractModel):
             raise UserError(_("ID de orden de Magento no encontrado para este registro"))
         
         # Construir URL del endpoint
-        url = f"{instance_url}/rest/V1/orders/{magento_order_id}"
+        url = f"{instance_url}/rest/V1/orders"
         
         # Construir datos del request
         data = json.dumps({
             "entity": {
                 "entity_id": magento_order_id,
                 "extension_attributes": {
-                    "administrative_status": status
+                    "ceg_status": status
                 }
             }
         })
