@@ -33,6 +33,12 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
         store=True
     )
 
+    anticipo_type = fields.Selection([
+        ('anticipo_1', 'Anticipo 1'),
+        ('anticipo_2', 'Anticipo 2'),
+        ('saldo_final', 'Saldo Final'),
+    ], string="Tipo de Anticipo", default='anticipo_1', required=True)
+
     #=== COMPUTE METHODS ===#
 
     @api.depends('purchase_order_ids')
@@ -92,8 +98,13 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             raise UserError(_('No confirmed sale orders found related to the selected purchase orders.'))
                 
         for sale_order in sale_orders:
-            if sale_order.invoice_ids > 0:
+            if self.anticipo_type == 'anticipo_1' and sale_order.invoice_ids > 0:
                 continue
+            if self.anticipo_type == 'anticipo_2' and sale_order.invoice_ids > 1:
+                continue
+            if self.anticipo_type == 'saldo_final' and sale_order.invoice_ids > 2:
+                continue
+
             # Crear el wizard de anticipo de venta
             advance_wizard = self.env['sale.advance.payment.inv'].create({
                 'advance_payment_method': 'percentage',

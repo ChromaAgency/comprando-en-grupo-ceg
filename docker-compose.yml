@@ -4,7 +4,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8069:8069"
+      - "8199:8069"
     command: odoo --dev all -c /etc/odoo/odoo.conf -s 
     volumes:
       - ./config:/etc/odoo

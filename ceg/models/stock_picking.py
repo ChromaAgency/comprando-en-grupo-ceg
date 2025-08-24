@@ -7,6 +7,12 @@ class StockPicking(models.Model):
     _inherit = ['stock.picking', 'magento.status.sender.mixin']
     _name = 'stock.picking'
 
+    def button_validate(self):
+        res = super(StockPicking, self).button_validate()
+        for rec in self.filtered(lambda p: p.is_magento_picking):
+            rec.export_magento_shipment()
+        return res
+
     def _get_magento_instance(self):
         """
         Obtiene la instancia de Magento desde la orden de venta relacionada.
