@@ -98,11 +98,11 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
             raise UserError(_('No confirmed sale orders found related to the selected purchase orders.'))
                 
         for sale_order in sale_orders:
-            if self.anticipo_type == 'anticipo_1' and sale_order.invoice_ids > 0:
+            if self.anticipo_type == 'anticipo_1' and len(sale_order.invoice_ids) > 0:
                 continue
-            if self.anticipo_type == 'anticipo_2' and sale_order.invoice_ids > 1:
+            if self.anticipo_type == 'anticipo_2' and len(sale_order.invoice_ids) > 1:
                 continue
-            if self.anticipo_type == 'saldo_final' and sale_order.invoice_ids > 2:
+            if self.anticipo_type == 'saldo_final' and len(sale_order.invoice_ids) > 2:
                 continue
 
             # Crear el wizard de anticipo de venta
