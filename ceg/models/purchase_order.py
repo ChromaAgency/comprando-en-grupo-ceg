@@ -24,7 +24,7 @@ class PurchaseOrder(models.Model):
         res = super(PurchaseOrder, self).write(vals)
         if 'magento_state' in vals:
             status = vals['magento_state']
-            if status in ['in_prod', 'in_transit']:
+            if status in ['in_prod', 'in_transit', 'in_customs']:
                 status_mapping = {
                     'in_prod': 'impo_in_prod',
                     'in_transit': 'impo_shipped',
