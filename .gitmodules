@@ -2,3 +2,7 @@
 	path = server-auth
 	url = git@github.com:OCA/server-auth.git
 	branch = 18.0
+[submodule "odoo_account_addons"]
+	path = odoo_account_addons
+	url = git@github.com:ChromaAgency/odoo_account_addons.git
+	branch = 18.0

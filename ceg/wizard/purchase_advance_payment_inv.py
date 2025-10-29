@@ -2,7 +2,8 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class PurchaseAdvancePaymentInv(models.TransientModel):
     _name = 'purchase.advance.payment.inv'
@@ -36,6 +37,7 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
     anticipo_type = fields.Selection([
         ('anticipo_1', 'Anticipo 1'),
         ('anticipo_2', 'Anticipo 2'),
+        ('anticipo_saldo', 'Anticipo con saldo final'),
         ('saldo_final', 'Saldo Final'),
     ], string="Tipo de Anticipo", default='anticipo_1', required=True)
 
@@ -104,13 +106,21 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                 continue
             if self.anticipo_type == 'saldo_final' and len(sale_order.invoice_ids) > 2:
                 continue
-
-            # Crear el wizard de anticipo de venta
-            advance_wizard = self.env['sale.advance.payment.inv'].create({
-                'advance_payment_method': 'percentage',
-                'amount': self.percentage*100,  # Usar el porcentaje configurado en el wizard
-                'sale_order_ids': [(4, sale_order.id)],
-            })
+            
+            if self.anticipo_type == 'anticipo_saldo':
+                # Crear el wizard de anticipo de venta
+                advance_wizard = self.env['sale.advance.payment.inv'].create({
+                    'advance_payment_method': 'fixed',
+                    'fixed_amount': sale_order.amount_total - sum(sale_order.order_line.filtered('is_downpayment').mapped(lambda l: l.tax_id.compute_all(l.price_unit)['total_included'])),  # Usar el porcentaje configurado en el wizard
+                    'sale_order_ids': [(4, sale_order.id)],
+                })
+            else:
+                # Crear el wizard de anticipo de venta
+                advance_wizard = self.env['sale.advance.payment.inv'].create({
+                    'advance_payment_method': 'percentage',
+                    'amount': self.percentage*100,  # Usar el porcentaje configurado en el wizard
+                    'sale_order_ids': [(4, sale_order.id)],
+                })
             
             # Crear la factura de anticipo
             invoice = advance_wizard._create_invoices(sale_order)
