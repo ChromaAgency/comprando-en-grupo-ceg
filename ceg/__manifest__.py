@@ -24,6 +24,7 @@
         'security/ir.model.access.csv',
         'views/purchase_advance_payment_inv_views.xml',
         'views/purchase_order_views.xml',
+        'views/layout.xml',
         'views/magento_status_views.xml',
     ],
     'installable': True,
