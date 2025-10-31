@@ -26,6 +26,7 @@
         'views/purchase_order_views.xml',
         'views/layout.xml',
         'views/magento_status_views.xml',
+        'views/stock.picking.xml',
     ],
     'installable': True,
     'auto_install': True,

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models
+from odoo import models, fields, api
 
 
 class StockPicking(models.Model):
     _inherit = ['stock.picking', 'magento.status.sender.mixin']
     _name = 'stock.picking'
+    exported_to_picking_list = fields.Boolean(string="Exportado a lista de picking", default=False)
 
     def button_validate(self):
         res = super(StockPicking, self).button_validate()
@@ -53,3 +54,12 @@ class StockPicking(models.Model):
         
         return False
 
+    def action_get_picking_list(self):
+        picking_ids_map = map(lambda picking_id: str(picking_id), self.ids)
+        picking_ids = ",".join(picking_ids_map)
+        self.exported_to_picking_list = True
+        return {
+            "type": "ir.actions.act_url",
+            "url": "/ceg/download_picking_list/%s" % (picking_ids),
+            "target": "new",
+        }
