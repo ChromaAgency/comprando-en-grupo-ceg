@@ -4,8 +4,7 @@ import json
 from odoo import models, fields
 from odoo.exceptions import UserError
 
-key_list = ['name', 'street', 'street2', 'city', 'zip', 'phone', 'state_id', 'country_id',
-            'company_name']
+key_list = ['vat']
 key_list_without_company = ['name', 'street', 'street2', 'city', 'zip', 'phone', 'state_id', 'country_id', 'parent_id', 'type']
 import logging
 _logger = logging.getLogger(__name__)
