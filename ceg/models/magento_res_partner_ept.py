@@ -263,8 +263,9 @@ class MagentoResPartnerEpt(models.Model):
         for address in data.get('addresses'):
             try:
                 if data.get('taxvat'):
-                    address['taxvat'] = data.get('taxvat')
                     address['vat_id'] = data.get('taxvat')
+                    address['taxvat'] = data.get('taxvat')
+                    data['vat_id'] = data.get('taxvat')
                 if address.get('default_billing', False):
                     billing_address = address.copy()
                     billing_address['store_id'] = data.get('store_id')
@@ -273,5 +274,5 @@ class MagentoResPartnerEpt(models.Model):
                 # address.update({'customer_group_odoo_id': customer_group_id})
                 data = self._upsert_customer_address_partner(address, data, instance)
             except UserError as e:
-                _logger.error(f"Error while upserting customer address: {e}")
+                _logger.error(f"Error while upserting customer address: {e} add {address} data {data}")
         return data
