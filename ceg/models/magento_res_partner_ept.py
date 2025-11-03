@@ -232,8 +232,9 @@ class MagentoResPartnerEpt(models.Model):
     
     def _upsert_customer_address_partner(self, address, data, instance):
         customer_partner_id = data.get('parent_id')
-        if 'taxvat' not in address and 'vat_id' not in address and data.get('taxvat'):
-            address['taxvat'] = data.get('taxvat')
+        if data.get('taxvat'):
+            address['vat_id'] = data.get('taxvat')
+            data['vat_id'] = data.get('taxvat')
         address = self.add_store_settings(address, data)
         partner = self._upsert_partner_address(address, customer_partner_id, instance)
         customer = self._upsert_customer_address(address, data, partner, instance)
@@ -260,13 +261,17 @@ class MagentoResPartnerEpt(models.Model):
         data.update({'parent_id': customer.partner_id.id})
         # customer.partner_id.customer_group_id = customer_group_id
         for address in data.get('addresses'):
-            if 'taxvat' not in address and 'vat_id' not in address and data.get('taxvat'):
-                address['taxvat'] = data.get('taxvat')
-            if address.get('default_billing', False):
-                billing_address = address.copy()
-                billing_address['store_id'] = data.get('store_id')
-                # billing_address.update({'customer_group_odoo_id': customer_group_id})
-                self._upsert_company(billing_address, customer.partner_id, instance)
-            # address.update({'customer_group_odoo_id': customer_group_id})
-            data = self._upsert_customer_address_partner(address, data, instance)
+            try:
+                if data.get('taxvat'):
+                    address['taxvat'] = data.get('taxvat')
+                    address['vat_id'] = data.get('taxvat')
+                if address.get('default_billing', False):
+                    billing_address = address.copy()
+                    billing_address['store_id'] = data.get('store_id')
+                    # billing_address.update({'customer_group_odoo_id': customer_group_id})
+                    self._upsert_company(billing_address, customer.partner_id, instance)
+                # address.update({'customer_group_odoo_id': customer_group_id})
+                data = self._upsert_customer_address_partner(address, data, instance)
+            except UserError as e:
+                _logger.error(f"Error while upserting customer address: {e}")
         return data
