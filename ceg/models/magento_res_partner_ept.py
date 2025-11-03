@@ -256,7 +256,7 @@ class MagentoResPartnerEpt(models.Model):
             customer = self.create(values)
         customer_group_id = data.get('customer_odoo_id')
         data.update({'parent_id': customer.partner_id.id})
-        customer.partner_id.customer_group_id = customer_group_id
+        # customer.partner_id.customer_group_id = customer_group_id
         for address in data.get('addresses'):
             if address.get('default_billing', False):
                 billing_address = address.copy()
