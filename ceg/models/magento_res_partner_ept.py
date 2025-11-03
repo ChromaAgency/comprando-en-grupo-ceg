@@ -232,6 +232,8 @@ class MagentoResPartnerEpt(models.Model):
     
     def _upsert_customer_address_partner(self, address, data, instance):
         customer_partner_id = data.get('parent_id')
+        if 'taxvat' not in address and 'vat_id' not in address and data.get('taxvat'):
+            address['taxvat'] = data.get('taxvat')
         address = self.add_store_settings(address, data)
         partner = self._upsert_partner_address(address, customer_partner_id, instance)
         customer = self._upsert_customer_address(address, data, partner, instance)
