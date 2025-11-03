@@ -66,8 +66,8 @@ class MagentoResPartnerEpt(models.Model):
             'type': address_type,
             'parent_id': kwargs.get('parent_id', False),
         }
-        if customer_group_id:
-            values.update({'customer_group_id': customer_group_id})
+        # if customer_group_id:
+        #     values.update({'customer_group_id': customer_group_id})
         values.update(self._find_state_country(data))
         values = self.env['res.partner'].remove_special_chars_from_partner_vals(values)
         return values
@@ -150,18 +150,18 @@ class MagentoResPartnerEpt(models.Model):
             })
         
         company_partner_vals = self._prepare_partner_values(address, instance)
-        l10n_ar_afip_responsibility_type_id = self._get_l10n_latam_responsibility_type(address.get('taxpayer_type'))
-        company_partner_vals.update({
-            'l10n_ar_afip_responsibility_type_id': l10n_ar_afip_responsibility_type_id.id,
-            'l10n_latam_identification_type_id': self.env.ref('l10n_ar.it_cuit').id, 
-                                     })
+        # l10n_ar_afip_responsibility_type_id = self._get_l10n_latam_responsibility_type(address.get('taxpayer_type'))
+        # company_partner_vals.update({
+        #     'l10n_ar_afip_responsibility_type_id': l10n_ar_afip_responsibility_type_id.id,
+        #     'l10n_latam_identification_type_id': self.env.ref('l10n_ar.it_cuit').id, 
+        #                              })
         company_partner_vals.pop('type', '')
         company_partner_vals.pop('parent_id', '')
         company_partner_vals.pop('name', '')
 
-        company_partner_vals.update({
-            'customer_group_id': address.get('customer_group_odoo_id')
-        })
+        # company_partner_vals.update({
+        #     'customer_group_id': address.get('customer_group_odoo_id')
+        # })
 
         company_partner.write(company_partner_vals)
 
@@ -191,7 +191,7 @@ class MagentoResPartnerEpt(models.Model):
         partner = Partner.create(partner_values)
 
         customer_group_id = address.get('customer_group_odoo_id')
-        partner.write({'customer_group_id': customer_group_id})
+        # partner.write({'customer_group_id': customer_group_id})
 
         return partner
             
@@ -261,8 +261,8 @@ class MagentoResPartnerEpt(models.Model):
             if address.get('default_billing', False):
                 billing_address = address.copy()
                 billing_address['store_id'] = data.get('store_id')
-                billing_address.update({'customer_group_odoo_id': customer_group_id})
+                # billing_address.update({'customer_group_odoo_id': customer_group_id})
                 self._upsert_company(billing_address, customer.partner_id, instance)
-            address.update({'customer_group_odoo_id': customer_group_id})
+            # address.update({'customer_group_odoo_id': customer_group_id})
             data = self._upsert_customer_address_partner(address, data, instance)
         return data
