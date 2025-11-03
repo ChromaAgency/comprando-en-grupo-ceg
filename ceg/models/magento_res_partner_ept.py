@@ -88,7 +88,7 @@ class MagentoResPartnerEpt(models.Model):
             if 'default_shipping' in list(data.keys()):
                 del data['default_shipping']
             values = self._prepare_partner_values(data, instance)
-            partner = Partner.create(values)
+            partner = Partner.with_context(skip_vat_check=True).create(values)
         return partner
     
     def _search_company_by_name(self, company_name):
@@ -103,7 +103,7 @@ class MagentoResPartnerEpt(models.Model):
         if country.code == 'AR' and state_code and 'AR-' in state_code:
             state_code = state_code.split('-')[1]
         zip_code = data.get('postcode')
-        state = partner.create_or_update_state_ept(data.get('country_id'), state_code, zip_code,
+        state = partner.with_context(skip_vat_check=True).create_or_update_state_ept(data.get('country_id'), state_code, zip_code,
                                                    country_obj=country)
         return {
             'country_id': country.id,
@@ -126,7 +126,7 @@ class MagentoResPartnerEpt(models.Model):
         company_name = address.get('company')
 
         if not instance.import_customer_as_company:
-            partner.write({'company_name': company_name})
+            partner.with_context(skip_vat_check=True).write({'company_name': company_name})
             return False
 
         vat = address.get('vat_id', '').strip()
@@ -141,7 +141,7 @@ class MagentoResPartnerEpt(models.Model):
             company_partner = self._search_company_by_name(company_name)
         
         if not company_partner:
-            company_partner = Partner.create({
+            company_partner = Partner.with_context(skip_vat_check=True).create({
                 'name': company_name,
                 'company_type': 'company',
                 'is_magento_customer': True,
@@ -162,10 +162,10 @@ class MagentoResPartnerEpt(models.Model):
         #     'customer_group_id': address.get('customer_group_odoo_id')
         # })
 
-        company_partner.write(company_partner_vals)
+        company_partner.with_context(skip_vat_check=True).write(company_partner_vals)
 
         if partner != company_partner:
-            partner.write({'parent_id': company_partner.id})
+            partner.with_context(skip_vat_check=True).write({'parent_id': company_partner.id})
 
         return company_partner
 
@@ -187,7 +187,7 @@ class MagentoResPartnerEpt(models.Model):
         partner_values = self._prepare_partner_values(address, instance, parent_id=parent_id)
         partner_values.update(self._find_state_country(address))
 
-        partner = Partner.create(partner_values)
+        partner = Partner.with_context(skip_vat_check=True).create(partner_values)
 
         customer_group_id = address.get('customer_group_odoo_id')
         # partner.write({'customer_group_id': customer_group_id})
@@ -227,7 +227,7 @@ class MagentoResPartnerEpt(models.Model):
         if not customer:
             layer_values = self._prepare_magento_customer_values(instance=instance, data=data, customer_id=address.get('customer_id'),
                                                                 address_id=address.get('id'), partner_id=partner.id)
-            customer.create(layer_values)
+            customer.with_context(skip_vat_check=True).create(layer_values)
         return customer 
     
     def _upsert_customer_address_partner(self, address, data, instance):
@@ -252,7 +252,7 @@ class MagentoResPartnerEpt(models.Model):
             partner = self._create_odoo_partner_from_email(data, instance)
             values = self._prepare_magento_customer_values(partner_id=partner.id, instance=instance,
                                                            data=data, customer_id=data.get('id'))
-            customer = self.create(values)
+            customer = self.with_context(skip_vat_check=True).create(values)
         customer_group_id = data.get('customer_odoo_id')
         data.update({'parent_id': customer.partner_id.id})
         # customer.partner_id.customer_group_id = customer_group_id
