@@ -250,6 +250,7 @@ class MagentoResPartnerEpt(models.Model):
         customer = False
         if data.get('id'):
             customer = self._search_customer(id=data.get('id'), email=data.get('email'), instance_id=instance.id)
+        
         if not customer:
             partner = self._create_odoo_partner_from_email(data, instance)
             values = self._prepare_magento_customer_values(partner_id=partner.id, instance=instance,
@@ -259,6 +260,8 @@ class MagentoResPartnerEpt(models.Model):
         data.update({'parent_id': customer.partner_id.id})
         # customer.partner_id.customer_group_id = customer_group_id
         for address in data.get('addresses'):
+            if 'taxvat' not in address and 'vat_id' not in address and data.get('taxvat'):
+                address['taxvat'] = data.get('taxvat')
             if address.get('default_billing', False):
                 billing_address = address.copy()
                 billing_address['store_id'] = data.get('store_id')
