@@ -12,9 +12,7 @@ _logger = logging.getLogger(__name__)
 
 
 class MagentoResPartnerEpt(models.Model):
-    _name = "magento.res.partner.ept"
-    _description = "Magento Res Partner"
-
+    _inherit = "magento.res.partner.ept"
 
     @staticmethod
     def add_store_settings(address, data):
