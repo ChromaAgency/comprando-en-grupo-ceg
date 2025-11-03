@@ -72,13 +72,13 @@ class MagentoResPartnerEpt(models.Model):
         values = self.env['res.partner'].remove_special_chars_from_partner_vals(values)
         return values
     
-    def _create_odoo_partner_from_email(self, data, instance):
+    def _create_odoo_partner_from_vat(self, data, instance):
         Partner = self.env['res.partner']
-        partner = Partner.search([('email', '=ilike', data.get('email'))])
+        partner = Partner.search([('vat', '=', data.get('taxvat')), ('type', '=', 'contact')])
         if len(partner) > 1:
-            # If we found more than 1 customer with same email then we are getting
+            # If we found more than 1 customer with same vat then we are getting
             # any one customer from it which have not parent_id set.
-            partner = Partner.search([('email', '=', data.get('email')),
+            partner = Partner.search([('vat', '=', data.get('taxvat')),
                                       ('parent_id', '=', False)], limit=1)
         if not partner:
             # Add contact=True to identify the address type. Remove the keys from the contact
@@ -89,6 +89,7 @@ class MagentoResPartnerEpt(models.Model):
             if 'default_shipping' in list(data.keys()):
                 del data['default_shipping']
             values = self._prepare_partner_values(data, instance)
+            _logger.info("Creating partner with values: %s", values)
             partner = Partner.with_context(skip_vat_check=True).create(values)
         return partner
     
@@ -251,7 +252,9 @@ class MagentoResPartnerEpt(models.Model):
             customer = self._search_customer(id=data.get('id'), email=data.get('email'), instance_id=instance.id)
         
         if not customer:
-            partner = self._create_odoo_partner_from_email(data, instance)
+            if data.get('taxvat'):
+                data['vat_id'] = data.get('taxvat')
+            partner = self._create_odoo_partner_from_vat(data, instance)
             values = self._prepare_magento_customer_values(partner_id=partner.id, instance=instance,
                                                            data=data, customer_id=data.get('id'))
             customer = self.with_context(skip_vat_check=True).create(values)
