@@ -1,1 +1,2 @@
 from . import discuss_channel, whatsapp_account, magento_status_sender_mixin, purchase_order, sale_order, account_move, stock_picking
+from . import magento_res_partner_ept
