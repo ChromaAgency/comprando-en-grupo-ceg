@@ -45,6 +45,7 @@ class MagentoResPartnerEpt(models.Model):
         }
 
     def _prepare_partner_values(self, data, instance, **kwargs):
+        _logger.info("prepare_partner_vals data %s", data)
         customer_group_id = data.get('customer_group_odoo_id')
         address_type = self.__get_type(list(data.keys()))
         street = self.__merge_street(data.get('street', []))
@@ -53,7 +54,7 @@ class MagentoResPartnerEpt(models.Model):
         values = {
             'name': f"{data.get('firstname')} {data.get('lastname')}",
             'email': data.get('email'),
-            'vat': data.get('vat_id', '') or data.get('taxvat', ''),
+            'vat': data.get('vat_id') or data.get('taxvat', ''),
             'customer_rank': 1,
             'is_magento_customer': True,
             'street': street.get('street'),
@@ -232,9 +233,6 @@ class MagentoResPartnerEpt(models.Model):
     
     def _upsert_customer_address_partner(self, address, data, instance):
         customer_partner_id = data.get('parent_id')
-        if data.get('taxvat'):
-            address['vat_id'] = data.get('taxvat')
-            data['vat_id'] = data.get('taxvat')
         address = self.add_store_settings(address, data)
         partner = self._upsert_partner_address(address, customer_partner_id, instance)
         customer = self._upsert_customer_address(address, data, partner, instance)
