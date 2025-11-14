@@ -137,7 +137,7 @@ class MexicanDocumentsController(http.Controller):
             self._validate_access_token(invoice, access_token)
 
             # Verificar que tenga documento CFDI
-            if not hasattr(invoice, 'l10n_mx_edi_cfdi_attachment_id') or not invoice.l10n_mx_edi_cfdi_attachment_id:
+            if not hasattr(invoice, 'l10n_mx_edi_cfdi_attachment_id') or not invoice.invoice_pdf_report_id:
                 raise NotFound(_("CFDI document not found for this invoice"))
             
             # Obtener el PDF del attachment
