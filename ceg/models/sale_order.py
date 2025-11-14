@@ -14,6 +14,7 @@ class SaleOrder(models.Model):
         ],
         string='Estado de Magento')
     
+    magento_currency_exchange_rate = fields.Float(string="Magento Currency Exchange Rate")
 
     def write(self, vals):
         """
@@ -32,7 +33,61 @@ class SaleOrder(models.Model):
                     record.send_status_to_magento(mapping.get(record.magento_state))
         
         return res
+    def _prepare_order_dict(self, item, instance):
+        order_vals = super()._prepare_order_dict(item, instance)
+        order_vals.update({
+            'magento_currency_exchange_rate': item.get('extension_attributes').get('currency_rate'),
+        })
+        return order_vals
 
+    def __update_partner_dict(self, item, instance):
+        customers = super().__update_partner_dict(item, instance)
+        customers.update({
+            'taxvat': item.get('customer_taxvat') or item.get('extension_attributes', {}).get('taxvat'),
+            'company': item.get('extension_attributes', {}).get('company_name'),
+            'taxpayer_type': item.get('extension_attributes', {}).get('taxpayer_type'),
+        })
+        return customers
+
+    def _upsert_currency_rate(self, currency_id, rate):
+        """ 
+            Search and create currency rate if not found
+        """
+        currency_rate = self.env['res.currency.rate']
+        if not rate:
+            return False
+        domain = [('currency_id', '=', currency_id), ('name', '=', fields.Date.today())]
+        currency_rate = currency_rate.search(domain)
+        if not currency_rate:
+            currency_rate = currency_rate.create({
+                'currency_id': currency_id,
+                'rate': 1/rate,
+                'name': fields.Date.today()
+            })
+            return currency_rate
+        currency_rate.write({
+            'rate': 1/rate
+        })
+        return currency_rate
+
+    def create_sale_order_ept(self, item, instance, log_line, line_id):
+        is_processed = super().create_sale_order_ept(item, instance, log_line, line_id)
+        if is_processed:
+            order_currency_code = item.get('order_currency_code')
+            curr = self.env['res.currency'].search([('name', '=', order_currency_code)])
+            if curr:
+                self._upsert_currency_rate(curr.id, item.get('extension_attributes',{}).get('currency_rate'))
+                        
+    @staticmethod
+    def __update_partner_address_dict(item, addresses):
+        vals = super().__update_partner_address_dict(item, addresses)
+        vals.update({
+            'vat_id': item.get("taxvat"),
+            'taxvat': item.get("taxvat"),
+            'company': addresses.get('company', item.get('company')),
+            'taxpayer_type': item.get('taxpayer_type'),
+        })
+        return vals
 
     def _get_magento_instance(self):
         """

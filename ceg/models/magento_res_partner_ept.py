@@ -112,16 +112,36 @@ class MagentoResPartnerEpt(models.Model):
             'state_id': state.id
         }
     
-    def _get_l10n_latam_responsibility_type(self, taxpayer_type):
+    def _get_fiscal_regime(self, taxpayer_type):
         taxpayer_types_xml_id = {
-            'Responsable inscripto': 'l10n_ar.res_IVARI',
-            'Sujeto Exento': 'l10n_ar.res_IVAE',
-            'Monotributo': 'l10n_ar.res_RM',
-            'Exterior': 'l10n_ar.res_EXT',
-            'Tierra del Fuego': 'l10n_ar.res_IVA_LIB',
-            'No Alcanzado': 'l10n_ar.res_IVA_NO_ALC',
-        } 
-        return self.env.ref(taxpayer_types_xml_id[taxpayer_type])
+            '276': '601',
+            '277': '602',
+            '278': '603',
+            '279': '604',
+            '280': '605',
+            '281': '606',
+            '282': '607',
+            '283': '608',
+            '284': '609',
+            '285': '610',
+            '286': '611',
+            '287': '612',
+            '288': '613',
+            '289': '614',
+            '290': '615',
+            '291': '616',
+            '292': '617',
+            '293': '618',
+            '294': '619',
+            '295': '620',
+            '296': '621',
+            '297': '622',
+            '298': '623',
+            '299': '624',
+            '300': '625',
+            '301': '626',
+        }
+        return taxpayer_types_xml_id[taxpayer_type]
 
     def _upsert_company(self, address, partner, instance):
         Partner = self.env['res.partner']
@@ -151,11 +171,10 @@ class MagentoResPartnerEpt(models.Model):
             })
         
         company_partner_vals = self._prepare_partner_values(address, instance)
-        # l10n_ar_afip_responsibility_type_id = self._get_l10n_latam_responsibility_type(address.get('taxpayer_type'))
-        # company_partner_vals.update({
-        #     'l10n_ar_afip_responsibility_type_id': l10n_ar_afip_responsibility_type_id.id,
-        #     'l10n_latam_identification_type_id': self.env.ref('l10n_ar.it_cuit').id, 
-        #                              })
+        fiscal_regime = self._get_fiscal_regime(address.get('taxpayer_type'))
+        company_partner_vals.update({
+            'l10n_mx_edi_fiscal_regime': fiscal_regime,
+                                     })
         company_partner_vals.pop('type', '')
         company_partner_vals.pop('parent_id', '')
         company_partner_vals.pop('name', '')
