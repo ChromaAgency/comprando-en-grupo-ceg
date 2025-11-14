@@ -51,7 +51,6 @@ class MagentoResPartnerEpt(models.Model):
         street = self.__merge_street(data.get('street', []))
         magento_store = data.get('store_view') or self.env['magento.storeview'].search(
             [('magento_storeview_id', '=', data.get('store_id'))], limit=1)
-        fiscal_regime = self._get_fiscal_regime(data.get('taxpayer_type'))
         values = {
             'name': f"{data.get('firstname')} {data.get('lastname')}",
             'email': data.get('email'),
@@ -66,8 +65,12 @@ class MagentoResPartnerEpt(models.Model):
             'lang': magento_store.lang_id.code,
             'type': address_type,
             'parent_id': kwargs.get('parent_id', False),
-            'l10n_mx_edi_fiscal_regime': fiscal_regime,
         }
+        try:
+            fiscal_regime = self._get_fiscal_regime(data.get('taxpayer_type'))
+            values.update({'l10n_mx_edi_fiscal_regime': fiscal_regime})
+        except Exception as e:
+            _logger.error(f"Error while getting fiscal regime: {e}")
         # if customer_group_id:
         #     values.update({'customer_group_id': customer_group_id})
         values.update(self._find_state_country(data))
