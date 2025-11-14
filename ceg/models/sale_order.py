@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields
+from odoo.addons.odoo_magento2_ept.models.sale_order import SaleOrder as MagentoSaleOrder
+
 
 
 class SaleOrder(models.Model):
@@ -41,6 +43,12 @@ class SaleOrder(models.Model):
         return order_vals
 
     def __update_partner_dict(self, item, instance):
+        b_address = item.get('billing_address')
+        b_address.update({
+            'taxvat': item.get('customer_taxvat') or item.get('extension_attributes', {}).get('taxvat'),
+            'company': item.get('extension_attributes', {}).get('company_name'),
+            'taxpayer_type': item.get('extension_attributes', {}).get('taxpayer_type'),        
+        })
         customers = super().__update_partner_dict(item, instance)
         customers.update({
             'taxvat': item.get('customer_taxvat') or item.get('extension_attributes', {}).get('taxvat'),
@@ -80,12 +88,12 @@ class SaleOrder(models.Model):
                         
     @staticmethod
     def __update_partner_address_dict(item, addresses):
-        vals = super().__update_partner_address_dict(item, addresses)
+        vals = MagentoSaleOrder.__update_partner_address_dict(item, addresses)
         vals.update({
-            'vat_id': item.get("taxvat"),
-            'taxvat': item.get("taxvat"),
+            'vat_id': addresses.get('taxvat', item.get("taxvat")),
+            'taxvat': addresses.get('taxvat', item.get("taxvat")),
             'company': addresses.get('company', item.get('company')),
-            'taxpayer_type': item.get('taxpayer_type'),
+            'taxpayer_type': addresses.get('taxpayer_type', item.get('taxpayer_type')),
         })
         return vals
 
