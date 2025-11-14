@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extender la vista de formulario de orden de compra -->
+    <record id="purchase_order_form_ceg" model="ir.ui.view">
+        <field name="name">purchase.order.form.ceg</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button 
+                        name="action_create_sale_advance_payment"
+                        type="object"
+                        invisible="state not in ('purchase', 'done')"
+                        groups="purchase.group_purchase_user"
+                        string="Create Sale Advance Payment"
+                        >
+                   
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

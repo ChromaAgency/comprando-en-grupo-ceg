@@ -1,0 +1,243 @@
+openapi: 3.0.3
+info:
+  title: API de Documentos Mexicanos - CEG
+  description: |
+    Esta API permite obtener documentos fiscales mexicanos (CFDI) asociados a órdenes de venta de Magento, incluyendo:
+    - Facturas CFDI
+    - Complementos de pago CFDI
+    - Documentos de traslado CFDI
+
+    **Autenticación:**  
+    Todos los endpoints requieren autenticación mediante API Key del módulo `auth_api_key`.
+
+    **Métodos de autenticación:**
+    1. Header HTTP: `X-API-Key: tu_api_key`
+    2. Query parameter: `?api_key=tu_api_key`
+  version: "1.0.0"
+servers:
+  - url: https://tu-dominio.com
+security:
+  - ApiKeyAuth: []
+paths:
+  /api/mexican-documents/{magento_order_ref}:
+    get:
+      summary: Obtener URLs de documentos mexicanos
+      description: Obtiene las URLs de todos los documentos CFDI asociados a una orden de venta de Magento.
+      parameters:
+        - name: magento_order_ref
+          in: path
+          required: true
+          description: Referencia de la orden en Magento (busca por client_order_ref, name, origin o coincidencia parcial)
+          schema:
+            type: string
+        - name: api_key
+          in: query
+          required: false
+          description: API Key alternativa al header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Respuesta exitosa con URLs de documentos CFDI
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      sale_order:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                          magento_ref:
+                            type: string
+                          amount_total:
+                            type: number
+                            format: float
+                      invoices:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type: string
+                      payments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type: string
+                      transfer_documents:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            url:
+                              type: string
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  code:
+                    type: integer
+        '401':
+          description: No autorizado (API key inválida o faltante)
+        '404':
+          description: Recurso no encontrado
+        '500':
+          description: Error interno del servidor
+      security:
+        - ApiKeyAuth: []
+  /api/mexican-documents/pdf/invoice/{invoice_id}.pdf:
+    get:
+      summary: Descargar PDF de factura CFDI
+      description: Descarga el PDF del CFDI de una factura específica.
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          description: ID de la factura en Odoo
+          schema:
+            type: integer
+        - name: api_key
+          in: query
+          required: false
+          description: API Key alternativa al header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF de la factura CFDI
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="NOMBRE_DEL_PDF.pdf"
+        '401':
+          description: No autorizado (API key inválida o faltante)
+        '404':
+          description: Factura no encontrada o sin CFDI
+        '500':
+          description: Error interno del servidor
+      security:
+        - ApiKeyAuth: []
+  /api/mexican-documents/pdf/payment/{payment_id}.pdf:
+    get:
+      summary: Descargar PDF de complemento de pago CFDI
+      description: Descarga el PDF del CFDI de un complemento de pago específico.
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          description: ID del pago en Odoo
+          schema:
+            type: integer
+        - name: api_key
+          in: query
+          required: false
+          description: API Key alternativa al header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF del complemento de pago CFDI
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="complemento_pago.pdf"
+        '401':
+          description: No autorizado (API key inválida o faltante)
+        '404':
+          description: Complemento de pago no encontrado o sin CFDI
+        '500':
+          description: Error interno del servidor
+      security:
+        - ApiKeyAuth: []
+  /api/mexican-documents/pdf/transfer/{picking_id}:
+    get:
+      summary: Descargar PDF de documento de traslado CFDI
+      description: Descarga el PDF del CFDI de un documento de traslado específico.
+      parameters:
+        - name: picking_id
+          in: path
+          required: true
+          description: ID del documento de traslado en Odoo
+          schema:
+            type: integer
+        - name: api_key
+          in: query
+          required: false
+          description: API Key alternativa al header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF del documento de traslado CFDI
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="traslado.pdf"
+        '401':
+          description: No autorizado (API key inválida o faltante)
+        '404':
+          description: Documento de traslado no encontrado o sin CFDI
+        '500':
+          description: Error interno del servidor
+      security:
+        - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  responses:
+    UnauthorizedError:
+      description: No autorizado (API key inválida o faltante)
+    NotFoundError:
+      description: Recurso no encontrado
+    BadRequestError:
+      description: Error en la solicitud (parámetros incorrectos)
+    InternalServerError:
+      description: Error interno del servidor
+tags:
+  - name: Documentos Mexicanos
+    description: Operaciones relacionadas con CFDI mexicanos

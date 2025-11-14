@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista del wizard para crear anticipos desde órdenes de compra -->
+    <record id="view_purchase_advance_payment_inv" model="ir.ui.view">
+        <field name="name">purchase.advance.payment.inv.form</field>
+        <field name="model">purchase.advance.payment.inv</field>
+        <field name="arch" type="xml">
+            <form string="Create Advance Payment for Sale Orders">
+                <group>
+                    <group>
+                        <field name="purchase_order_ids" widget="many2many_tags" options="{'no_create': True}" context="{'default_state': 'purchase'}"/>
+                        <field name="count" string="Purchase Orders Selected"/>
+                        <field name="sale_order_total" string="Total Sale Orders Amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                    </group>
+                    <group>
+                        <field name="anticipo_type" string="Tipo de anticipo" widget="radio"/>
+                        <field name="percentage" string="Advance Payment Percentage (%)" widget="percentage"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                </group>
+                
+                <group string="Information">
+                    <p>This wizard will create advance payment invoices for the <b>specified percentage</b> of the total amount of each sale order related to the selected purchase orders.</p>
+                    <p><b>Note:</b> Only confirmed sale orders (in 'Sale Order' or 'Locked' state) will be processed.</p>
+                </group>
+                
+                <footer>
+                    <button name="create_sale_advance_payments" string="Create Advance Payments" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción del wizard -->
+    <record id="action_purchase_advance_payment_inv" model="ir.actions.act_window">
+        <field name="name">Create Advance Payment for Sale Orders</field>
+        <field name="res_model">purchase.advance.payment.inv</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_view_types">list,form</field>
+    </record>
+</odoo>
