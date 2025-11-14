@@ -113,35 +113,7 @@ class MagentoResPartnerEpt(models.Model):
         }
     
     def _get_fiscal_regime(self, taxpayer_type):
-        taxpayer_types_xml_id = {
-            '276': '601',
-            '277': '602',
-            '278': '603',
-            '279': '604',
-            '280': '605',
-            '281': '606',
-            '282': '607',
-            '283': '608',
-            '284': '609',
-            '285': '610',
-            '286': '611',
-            '287': '612',
-            '288': '613',
-            '289': '614',
-            '290': '615',
-            '291': '616',
-            '292': '617',
-            '293': '618',
-            '294': '619',
-            '295': '620',
-            '296': '621',
-            '297': '622',
-            '298': '623',
-            '299': '624',
-            '300': '625',
-            '301': '626',
-        }
-        return taxpayer_types_xml_id[taxpayer_type]
+        return ''.join(list(filter(lambda s: str.isdigit(s), taxpayer_type)))[:3]
 
     def _upsert_company(self, address, partner, instance):
         Partner = self.env['res.partner']
