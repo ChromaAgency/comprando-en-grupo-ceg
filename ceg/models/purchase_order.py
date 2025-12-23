@@ -14,7 +14,6 @@ class PurchaseOrder(models.Model):
             ('in_customs', 'En aduanas'),
         ],
         string='State',
-        default="in_prod",
         help='State of the order in Magento'
     )
     def write(self, vals):
@@ -67,9 +66,8 @@ class PurchaseOrder(models.Model):
         ])
         
         for sale_order in sale_orders:
-            if (hasattr(sale_order, 'magento_order_id') and 
-                sale_order.magento_order_id):
-                return sale_order.magento_order_id
+            if sale_order.magento_order_id:
+                yield sale_order.magento_order_id
         
         return False
 

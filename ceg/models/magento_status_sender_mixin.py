@@ -114,8 +114,9 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                url, headers, data = rec._build_status_request_data(status)
-                response = requests.post(url, headers=headers, data=data)
+                for magento_order_id in self._get_magento_order_id(magento_order_id):
+                    url, headers, data = rec._build_status_request_data(status, magento_order_id)
+                    response = requests.post(url, headers=headers, data=data)
                 
                 if response.status_code != 200:
                     rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, rec.id, response.status_code, response.text))
@@ -127,7 +128,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                 rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
                 return False
 
-    def _build_status_request_data(self, status):
+    def _build_status_request_data(self, status, magento_order_id):
         """
         Construye los datos de la petición para enviar a Magento.
         Este método debe ser sobrescrito en cada modelo que use el mixin.
@@ -158,7 +159,6 @@ class MagentoStatusSenderMixin(models.AbstractModel):
             raise UserError(_("URL de Magento no configurada en la instancia"))
         
         # Obtener ID de orden de Magento
-        magento_order_id = self._get_magento_order_id()
         if not magento_order_id:
             raise UserError(_("ID de orden de Magento no encontrado para este registro"))
         
@@ -226,11 +226,14 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         # Implementación por defecto que busca el campo magento_order_id
         if hasattr(self, 'magento_order_id') and self.magento_order_id:
-            return self.magento_order_id
+            yield self.magento_order_id
+            return
+
         
         # Si no tiene campo directo, intentar obtenerlo de la orden de venta relacionada
         if hasattr(self, 'sale_id') and self.sale_id and hasattr(self.sale_id, 'magento_order_id'):
-            return self.sale_id.magento_order_id
+            yield self.sale_id.magento_order_id
+            return
         
         # Para modelos como account.move, buscar en las órdenes de venta relacionadas
         if hasattr(self, 'invoice_line_ids'):
@@ -239,9 +242,9 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                     for sale_line in line.sale_line_ids:
                         if (hasattr(sale_line.order_id, 'magento_order_id') and 
                             sale_line.order_id.magento_order_id):
-                            return sale_line.order_id.magento_order_id
-        
-        return False
+                            yield sale_line.order_id.magento_order_id
+                            return
+        return 
 
     def _get_status_comment(self, status):
         """

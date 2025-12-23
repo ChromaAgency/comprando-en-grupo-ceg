@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="report_invoice_document_inherit_ceg" model="ir.ui.view">
+        <field name="name">account.move.view.form.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.report_invoice_document"/>
+        <field name="arch" type="xml">
+            <address t-field="o.partner_id" position="attributes">
+                <attribute name="t-field">o.partner_id.commercial_partner_id</attribute>
+            </address>
+            <address t-field="o.partner_id" position="attributes">
+                <attribute name="t-field">o.partner_id.commercial_partner_id</attribute>
+            </address>
+            <address t-field="o.partner_id" position="attributes">
+                <attribute name="t-field">o.partner_id.commercial_partner_id</attribute>
+            </address>
+        </field>
+    </record>
+
+</odoo>

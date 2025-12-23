@@ -18,7 +18,7 @@
     # for the full list
     'category': 'Account',
     # any module necessary for this one to work correctly
-    'depends': ['whatsapp', 'odoo_magento2_ept', 'purchase', 'sale', 'sale_purchase', 'auth_api_key', 'l10n_mx_edi'],
+    'depends': ['whatsapp', 'odoo_magento2_ept', 'purchase', 'sale', 'sale_purchase', 'auth_api_key', 'l10n_mx_edi', 'crm'],
     # always loaded
     'data': [
         'security/ir.model.access.csv',
@@ -27,6 +27,7 @@
         'views/layout.xml',
         'views/magento_status_views.xml',
         'views/stock.picking.xml',
+        'views/report_invoice_document.xml',
     ],
     'installable': True,
     'auto_install': True,

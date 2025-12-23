@@ -6,3 +6,7 @@
 	path = odoo_account_addons
 	url = git@github.com:ChromaAgency/odoo_account_addons.git
 	branch = 18.0
+[submodule "odoo_sale_addons"]
+	path = odoo_sale_addons
+	url = git@github.com:ChromaAgency/odoo_sale_addons.git
+	branch = 18.0
