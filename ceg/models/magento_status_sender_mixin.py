@@ -114,7 +114,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                for magento_order_id in self._get_magento_order_id(status):
+                for magento_order_id in self._get_magento_order_id():
                     url, headers, data = rec._build_status_request_data(status, magento_order_id)
                     response = requests.post(url, headers=headers, data=data)
                 
