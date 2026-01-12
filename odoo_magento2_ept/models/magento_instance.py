@@ -1752,15 +1752,15 @@ class MagentoInstance(models.Model):
     def get_draft_queues(self, model='', name=''):
         if not model:
             return False
-        query = """
+        query = f"""
             SELECT queue_id 
-                FROM %s 
+                FROM {model} 
                 WHERE 
                     state = 'draft'
                 GROUP BY queue_id, create_date
                 ORDER BY create_date ASC
             """
-        self._cr.execute(query, (model,))
+        self._cr.execute(query)
         queue_ids = [queue.get('queue_id') for queue in self._cr.dictfetchall()]
         # model = model.replace('_', '.')
         queues = self.env[name].browse(queue_ids)
