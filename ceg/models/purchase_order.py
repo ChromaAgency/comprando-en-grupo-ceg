@@ -38,14 +38,8 @@ class PurchaseOrder(models.Model):
         """
         self.ensure_one()
         
-        # Buscar órdenes de venta que puedan estar relacionadas con esta orden de compra
-        # Esto puede variar según la implementación específica del proyecto
-        sale_orders = self.env['sale.order'].search([
-            ('procurement_group_id', '!=', False),
-            ('state', 'not in', ['draft', 'cancel'])
-        ])
         
-        for sale_order in sale_orders:
+        for sale_order in self.move_dest_ids.sale_id:
             # Verificar si hay una relación indirecta a través de movimientos de stock
             if (hasattr(sale_order, 'magento_instance_id') and 
                 sale_order.magento_instance_id):
@@ -59,15 +53,6 @@ class PurchaseOrder(models.Model):
         """
         self.ensure_one()
         
-        # Similar al método anterior, buscar órdenes de venta relacionadas
-        sale_orders = self.env['sale.order'].search([
-            ('procurement_group_id', '!=', False),
-            ('state', 'not in', ['draft', 'cancel'])
-        ])
-        
-        for sale_order in sale_orders:
-            if sale_order.magento_order_id:
-                yield sale_order.magento_order_id
         
         return False
 
