@@ -213,6 +213,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         :return: Registro de magento.instance
         :rtype: recordset
         """
+        _logger.info("Default _get_magento_instance called for %s ID %s", self._name, self.id)
         # Implementación por defecto que busca el campo magento_instance_id
         if hasattr(self, 'magento_instance_id') and self.magento_instance_id:
             return self.magento_instance_id
