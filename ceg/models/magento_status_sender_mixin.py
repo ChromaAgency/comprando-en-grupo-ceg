@@ -102,7 +102,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                 
                 
             except Exception as e:
-                rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
+                rec._log_message("Excepción al enviar estado administrativo '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
                 return False
 
 
