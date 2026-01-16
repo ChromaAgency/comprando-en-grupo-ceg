@@ -52,7 +52,6 @@ class StockPicking(models.Model):
                 if hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id:
                     yield sale_order.magento_order_id
         
-        yield False
 
     def action_get_picking_list(self):
         picking_ids_map = map(lambda picking_id: str(picking_id), self.ids)
