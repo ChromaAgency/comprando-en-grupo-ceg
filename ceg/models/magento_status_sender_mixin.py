@@ -96,13 +96,13 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                     response = requests.post(url, headers=headers, data=data)
                     
                     if response.status_code != 200:
-                        rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, rec.id, response.status_code, response.text))
+                        rec._log_message("Error al enviar el estado administrativo '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, magento_order_id, response.status_code, response.text))
                         continue
-                rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % (status, rec._name, rec.id))
+                    rec._log_message("Estado administrativo '%s' enviado exitosamente a Magento para %s ID %s" % (status, rec._name, magento_order_id))
                 
                 
             except Exception as e:
-                rec._log_message("Excepción al enviar estado administrativo '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
+                rec._log_message("Excepción al enviar estado administrativo '%s' a Magento para %s ID %s: %s" % (status, rec._name, magento_order_id, str(e)))
                 return False
 
 
@@ -127,14 +127,14 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                     response = requests.post(url, headers=headers, data=data)
 
                     if response or response.status_code != 200:
-                        rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, rec.id, response.status_code, response.text))
+                        rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, magento_order_id, response.status_code, response.text))
                         return False
                     
-                    rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % (status, rec._name, rec.id))
+                    rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % (status, rec._name, magento_order_id))
                     return True
                 
             except Exception as e:
-                rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
+                rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % (status, rec._name, magento_order_id, str(e)))
                 return False
 
     def _build_status_request_data(self, status, magento_order_id):
