@@ -52,9 +52,14 @@ class PurchaseOrder(models.Model):
         Para órdenes de compra, buscar el ID de Magento en las órdenes de venta relacionadas.
         """
         self.ensure_one()
+        last_magento_order_id = False
+        for sale_order in self.move_dest_ids.sale_id:
+            # Verificar si hay una relación indirecta a través de movimientos de stock
+            if (hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id):
+                last_magento_order_id = sale_order.magento_order_id
+                yield last_magento_order_id 
         
-        
-        return False
+        return last_magento_order_id
 
     def _get_status_comment(self, status):
         """

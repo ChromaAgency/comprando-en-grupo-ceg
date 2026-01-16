@@ -114,7 +114,10 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                for magento_order_id in self._get_magento_order_id():
+                ids = rec._get_magento_order_id()
+                if not ids:
+                    continue
+                for magento_order_id in ids:
                     url, headers, data = rec._build_status_request_data(status, magento_order_id)
                     response = requests.post(url, headers=headers, data=data)
                 
@@ -243,7 +246,6 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                         if (hasattr(sale_line.order_id, 'magento_order_id') and 
                             sale_line.order_id.magento_order_id):
                             yield sale_line.order_id.magento_order_id
-                            return
         return 
 
     def _get_status_comment(self, status):
