@@ -39,7 +39,7 @@ class PurchaseOrder(models.Model):
         """
         self.ensure_one()
         
-        
+        _logger.info("Checking %s for magento_instance_id", self.name)
         for sale_order in self.order_line.move_dest_ids.picking_id.sale_id:
             _logger.info("Checking sale order %s for magento_instance_id", sale_order.name)
             # Verificar si hay una relación indirecta a través de movimientos de stock
