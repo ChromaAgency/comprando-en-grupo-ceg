@@ -34,7 +34,7 @@ class StockPicking(models.Model):
         
         return False
 
-    def _get_magento_order_id(self):
+    def _get_magento_order_ids(self):
         """
         Obtiene el ID de orden de Magento desde la orden de venta relacionada.
         """
@@ -43,16 +43,16 @@ class StockPicking(models.Model):
         # Buscar la orden de venta relacionada
         if hasattr(self, 'sale_id') and self.sale_id:
             if hasattr(self.sale_id, 'magento_order_id'):
-                return self.sale_id.magento_order_id
+                yield self.sale_id.magento_order_id
         
         # Buscar en los movimientos de stock
         for move in self.move_ids_without_package:
             if hasattr(move, 'sale_line_id') and move.sale_line_id:
                 sale_order = move.sale_line_id.order_id
                 if hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id:
-                    return sale_order.magento_order_id
+                    yield sale_order.magento_order_id
         
-        return False
+        yield False
 
     def action_get_picking_list(self):
         picking_ids_map = map(lambda picking_id: str(picking_id), self.ids)

@@ -18,7 +18,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
     _name = 'magento.status.sender.mixin'
     _description = 'Magento Status Sender Mixin'
 
-    def _build_administrative_status_request_data(self, status):
+    def _build_administrative_status_request_data(self, status, magento_order_id):
         """
         Construye los datos de la petición para enviar a Magento.
         Este método debe ser sobrescrito en cada modelo que use el mixin.
@@ -48,8 +48,6 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         if not instance_url:
             raise UserError(_("URL de Magento no configurada en la instancia"))
         
-        # Obtener ID de orden de Magento
-        magento_order_id = self._get_magento_order_id()
         if not magento_order_id:
             raise UserError(_("ID de orden de Magento no encontrado para este registro"))
         
@@ -89,14 +87,19 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                url, headers, data = rec._build_administrative_status_request_data(status)
-                response = requests.post(url, headers=headers, data=data)
-                
-                if response.status_code != 200:
-                    rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, rec.id, response.status_code, response.text))
-                    return False
+                ids = rec._get_magento_order_ids()
+                if not ids:
+                    continue
+                response = None
+                for magento_order_id in ids:
+                    url, headers, data = rec._build_administrative_status_request_data(status, magento_order_id)
+                    response = requests.post(url, headers=headers, data=data)
+                    
+                    if response.status_code != 200:
+                        rec._log_message("Error al enviar el estado '%s' a Magento para %s ID %s. Status code: %s. Response: %s" % (status, rec._name, rec.id, response.status_code, response.text))
+                        continue
                 rec._log_message("Estado '%s' enviado exitosamente a Magento para %s ID %s" % (status, rec._name, rec.id))
-                return True
+                
                 
             except Exception as e:
                 rec._log_message("Excepción al enviar estado '%s' a Magento para %s ID %s: %s" % (status, rec._name, rec.id, str(e)))
@@ -114,7 +117,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         """
         for rec in self:
             try:
-                ids = rec._get_magento_order_id()
+                ids = rec._get_magento_order_ids()
                 if not ids:
                     continue
                 response = None
@@ -225,7 +228,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         # Para otros casos específicos, se debe sobrescribir este método
         return False
 
-    def _get_magento_order_id(self):
+    def _get_magento_order_ids(self):
         """
         Obtiene el ID de orden de Magento para el registro.
         Este método debe ser sobrescrito en cada modelo según su estructura.

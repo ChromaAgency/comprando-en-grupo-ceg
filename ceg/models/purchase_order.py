@@ -49,7 +49,7 @@ class PurchaseOrder(models.Model):
         
         return super()._get_magento_instance()
 
-    def _get_magento_order_id(self):
+    def _get_magento_order_ids(self):
         """
         Para órdenes de compra, buscar el ID de Magento en las órdenes de venta relacionadas.
         """
@@ -62,7 +62,7 @@ class PurchaseOrder(models.Model):
                 last_magento_order_id = sale_order.magento_order_id
                 yield last_magento_order_id 
         
-        yield super()._get_magento_order_id()
+        yield super()._get_magento_order_ids()
 
     def _get_status_comment(self, status):
         """

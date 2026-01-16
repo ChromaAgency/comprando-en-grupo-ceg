@@ -104,12 +104,12 @@ class SaleOrder(models.Model):
         self.ensure_one()
         return self.magento_instance_id if hasattr(self, 'magento_instance_id') else False
 
-    def _get_magento_order_id(self):
+    def _get_magento_order_ids(self):
         """
         Sobrescribe el método para obtener el ID de orden de Magento directamente.
         """
         self.ensure_one()
-        return self.magento_order_id if hasattr(self, 'magento_order_id') else False
+        yield self.magento_order_id if hasattr(self, 'magento_order_id') else False
 
     def _get_status_comment(self, status):
         """

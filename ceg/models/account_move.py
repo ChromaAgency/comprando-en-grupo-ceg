@@ -91,7 +91,7 @@ class AccountMove(models.Model):
         
         return False
 
-    def _get_magento_order_id(self):
+    def _get_magento_order_ids(self):
         """
         Obtiene el ID de orden de Magento desde la orden de venta relacionada.
         """
@@ -104,9 +104,9 @@ class AccountMove(models.Model):
                     for sale_line in line.sale_line_ids:
                         if (hasattr(sale_line.order_id, 'magento_order_id') and 
                             sale_line.order_id.magento_order_id):
-                            return sale_line.order_id.magento_order_id
+                            yield sale_line.order_id.magento_order_id
         
-        return False
+        yield False
 
     def _get_status_comment(self, status):
         """
