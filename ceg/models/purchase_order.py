@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, _, fields
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class PurchaseOrder(models.Model):
     _inherit = ['purchase.order', 'magento.status.sender.mixin']
@@ -54,12 +55,13 @@ class PurchaseOrder(models.Model):
         self.ensure_one()
         last_magento_order_id = False
         for sale_order in self.order_line.move_dest_ids.picking_id.sale_id:
+            _logger.info("Checking sale order %s for magento_order_id", sale_order.name)
             # Verificar si hay una relación indirecta a través de movimientos de stock
             if (hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id):
                 last_magento_order_id = sale_order.magento_order_id
                 yield last_magento_order_id 
         
-        return super()._get_magento_order_id()
+        yield super()._get_magento_order_id()
 
     def _get_status_comment(self, status):
         """

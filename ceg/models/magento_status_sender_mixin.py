@@ -235,13 +235,11 @@ class MagentoStatusSenderMixin(models.AbstractModel):
         # Implementación por defecto que busca el campo magento_order_id
         if hasattr(self, 'magento_order_id') and self.magento_order_id:
             yield self.magento_order_id
-            return
 
         
         # Si no tiene campo directo, intentar obtenerlo de la orden de venta relacionada
         if hasattr(self, 'sale_id') and self.sale_id and hasattr(self.sale_id, 'magento_order_id'):
             yield self.sale_id.magento_order_id
-            return
         
         # Para modelos como account.move, buscar en las órdenes de venta relacionadas
         if hasattr(self, 'invoice_line_ids'):
@@ -251,7 +249,6 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                         if (hasattr(sale_line.order_id, 'magento_order_id') and 
                             sale_line.order_id.magento_order_id):
                             yield sale_line.order_id.magento_order_id
-        return 
 
     def _get_status_comment(self, status):
         """
