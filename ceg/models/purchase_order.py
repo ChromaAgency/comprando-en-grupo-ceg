@@ -53,7 +53,7 @@ class PurchaseOrder(models.Model):
         """
         self.ensure_one()
         last_magento_order_id = False
-        for sale_order in self.move_dest_ids.sale_id:
+        for sale_order in self.order_line.move_dest_ids.sale_id:
             # Verificar si hay una relación indirecta a través de movimientos de stock
             if (hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id):
                 last_magento_order_id = sale_order.magento_order_id
