@@ -122,6 +122,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                     continue
                 response = None
                 for magento_order_id in ids:
+                    _logger.info("Sending status '%s' to Magento for %s ID %s with Magento Order ID %s", status, rec._name, rec.id, magento_order_id)
                     url, headers, data = rec._build_status_request_data(status, magento_order_id)
                     response = requests.post(url, headers=headers, data=data)
                 if not response:
