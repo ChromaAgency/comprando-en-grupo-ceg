@@ -122,7 +122,7 @@ class MagentoStatusSenderMixin(models.AbstractModel):
                     url, headers, data = rec._build_status_request_data(status, magento_order_id)
                     response = requests.post(url, headers=headers, data=data)
                 if not response:
-                    rec._log_message("No se envio el estado '%s' a Magento ya que no se encontro ID." % (status, rec._name, rec.id))
+                    rec._log_message("No se envio el estado '%s' a Magento ya que no se encontro ID para registro %s." % (status, rec._name, rec.id))
                     return False
 
                 if response or response.status_code != 200:
