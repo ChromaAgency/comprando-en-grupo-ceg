@@ -62,7 +62,6 @@ class PurchaseOrder(models.Model):
                 last_magento_order_id = sale_order.magento_order_id
                 yield last_magento_order_id 
         
-        yield super()._get_magento_order_ids()
 
     def _get_status_comment(self, status):
         """
