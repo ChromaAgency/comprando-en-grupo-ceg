@@ -47,7 +47,7 @@ class PurchaseOrder(models.Model):
                 sale_order.magento_instance_id):
                 return sale_order.magento_instance_id
         
-        return False
+        return super()._get_magento_instance()
 
     def _get_magento_order_id(self):
         """
