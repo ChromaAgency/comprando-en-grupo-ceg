@@ -40,7 +40,7 @@ class PurchaseOrder(models.Model):
         self.ensure_one()
         
         _logger.info("Checking %s for magento_instance_id", self.name)
-        for sale_order in self.order_line.move_dest_ids.picking_id.sale_id:
+        for sale_order in self._get_sale_orders():
             _logger.info("Checking sale order %s for magento_instance_id", sale_order.name)
             # Verificar si hay una relación indirecta a través de movimientos de stock
             if (hasattr(sale_order, 'magento_instance_id') and 
@@ -55,7 +55,7 @@ class PurchaseOrder(models.Model):
         """
         self.ensure_one()
         last_magento_order_id = False
-        for sale_order in self.order_line.move_dest_ids.picking_id.sale_id:
+        for sale_order in self._get_sale_orders():
             _logger.info("Checking sale order %s for magento_order_id", sale_order.name)
             # Verificar si hay una relación indirecta a través de movimientos de stock
             if (hasattr(sale_order, 'magento_order_id') and sale_order.magento_order_id):
