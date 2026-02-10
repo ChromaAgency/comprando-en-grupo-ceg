@@ -82,14 +82,36 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                 raise UserError(_('Percentage must be between 1 and 100.'))
 
     #=== ACTION METHODS ===#
-
+    def _create_invoices(self, sale_order, advance_wizard):
+        # Crear la factura de anticipo
+        created_invoices = self.env['account.move']
+        invoice = advance_wizard._create_invoices(sale_order)
+        if invoice:
+            created_invoices |= invoice
+            
+            # Crear un mensaje en las órdenes de compra relacionadas
+            related_pos = self.purchase_order_ids.filtered(
+                lambda po: any(
+                    line.sale_line_id.order_id == sale_order 
+                    for line in po.order_line 
+                    if line.sale_line_id
+                )
+            )
+            for po in related_pos:
+                po.message_post(
+                    body=_("Advance payment invoice created for related sale order %s (%.1f%%): %s") % (
+                        sale_order.name,
+                        self.percentage,
+                        invoice._get_html_link(title=_("Invoice"))
+                    )
+                )
+        return created_invoices
     def create_sale_advance_payments(self):
         """Crear anticipos para las órdenes de venta relacionadas"""
         self.ensure_one()
         
         if not self.purchase_order_ids:
             raise UserError(_('No purchase orders selected.'))
-        
         created_invoices = self.env['account.move']
         sale_orders = self.purchase_order_ids._get_sale_orders()
         
@@ -121,29 +143,9 @@ class PurchaseAdvancePaymentInv(models.TransientModel):
                     'amount': self.percentage*100,  # Usar el porcentaje configurado en el wizard
                     'sale_order_ids': [(4, sale_order.id)],
                 })
-            
-            # Crear la factura de anticipo
-            invoice = advance_wizard._create_invoices(sale_order)
-            if invoice:
-                created_invoices |= invoice
-                
-                # Crear un mensaje en las órdenes de compra relacionadas
-                related_pos = self.purchase_order_ids.filtered(
-                    lambda po: any(
-                        line.sale_line_id.order_id == sale_order 
-                        for line in po.order_line 
-                        if line.sale_line_id
-                    )
-                )
-                for po in related_pos:
-                    po.message_post(
-                        body=_("Advance payment invoice created for related sale order %s (%.1f%%): %s") % (
-                            sale_order.name,
-                            self.percentage,
-                            invoice._get_html_link(title=_("Invoice"))
-                        )
-                    )
-            self.purchase_order_ids.action_send_purchase_status_to_magento()
+            created_invoices |= self._create_invoices(sale_order, advance_wizard)
+        
+        self.purchase_order_ids.with_delay().action_send_purchase_status_to_magento()
         
         if not created_invoices:
             raise UserError(_('No advance payment invoices were created. Please verify that the purchase orders have related sale orders.'))

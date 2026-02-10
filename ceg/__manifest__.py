@@ -18,7 +18,7 @@
     # for the full list
     'category': 'Account',
     # any module necessary for this one to work correctly
-    'depends': ['whatsapp', 'odoo_magento2_ept', 'purchase', 'sale', 'sale_purchase', 'auth_api_key', 'l10n_mx_edi', 'crm'],
+    'depends': ['whatsapp', 'odoo_magento2_ept', 'purchase', 'sale', 'sale_purchase', 'auth_api_key', 'l10n_mx_edi', 'crm', 'queue_job'],
     # always loaded
     'data': [
         'security/ir.model.access.csv',
