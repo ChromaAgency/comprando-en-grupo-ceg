@@ -27,7 +27,7 @@ class ReportSaleOperationsTradeUnity(Controller):
         customer = sale_order.partner_id
         customer_commercial = customer.commercial_partner_id
         product = row.move_id.bom_line_id.product_id if row.move_id.bom_line_id else row.product_id 
-        product_component = row.product_id if row.move_id.bom_line_id else self.env['product.product']
+        product_component = row.product_id if row.move_id.bom_line_id else request.env['product.product']
         # TODO: Add d365 reference 
         product_component_code = product_component.default_code if product_component else ''
         product_barcode = product.barcode or ''
