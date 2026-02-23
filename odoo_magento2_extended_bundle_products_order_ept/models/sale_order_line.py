@@ -148,7 +148,7 @@ class SaleOrderLine(models.Model):
                 product = product.create({
                     'default_code': default_code,
                     'name': item.get('name'),
-                    'type': 'product'
+                    'type': 'consu'
                 })
                 # Changes as on 28.12.2023 By Ketan Chauhan
                 # Create images from magento store when bundle product creating in odoo product.product
