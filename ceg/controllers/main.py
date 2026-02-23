@@ -43,7 +43,7 @@ class ReportSaleOperationsTradeUnity(Controller):
         #Referencia, Transportista, Direccion Transportista quedo vacio
         data = [sale_order.name, customer_commercial.id, customer.display_name, customer_phone,customer_mobile, product.default_code, product_component_d365_reference,
                    product.name, UNIDAD, move_qty*box_qty, move_qty,move_qty*product.volume, REFERENCIA,delivery_mode,shipping_address.contact_address_complete, shipping_address.street, 
-                   shipping_address.street2, shipping_address.city, shipping_address.state_id.name, shipping_address.country_id.name,
+                   shipping_address.street2, shipping_address.city, shipping_address.zip, shipping_address.state_id.name, shipping_address.country_id.name,
                      OPERATION_NUMBER,  picking.name, product.default_code, product_component_code]
        
         data = [bool_to_empty_string(v) for v in data ]
@@ -56,7 +56,7 @@ class ReportSaleOperationsTradeUnity(Controller):
 
     def _add_header_to_csv(self, file_content):
         headers = ['Pedido de ventas', 'Cuenta de cliente', 'Nombre', 'Teléfono del cliente','Teléfono móvil del cliente', 'Código de artículo',	'Código de artículo componente',
-               'Nombre del producto','Unidad','Cantidad','Bultos','Volumen','Referencia','Modo de entrega','Dirección', 'Nombre de calle', 'Calle 2', 'Ciudad', 'Estado', 'País',
+               'Nombre del producto','Unidad','Cantidad','Bultos','Volumen','Referencia','Modo de entrega','Dirección', 'Nombre de calle', 'Calle 2', 'Ciudad', 'Código Postal', 'Estado', 'País',
                'Número de operación', 'Número de operación Odoo', 'SKU', 'SKU Componente'] 
         file_content.write(SEPARATOR.join(headers))
         file_content.write('\n')
