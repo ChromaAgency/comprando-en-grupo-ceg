@@ -144,7 +144,7 @@ class SaleOrder(models.Model):
         }
     
     def _get_mexican_downpayment_cfdi_uuids(self):
-        return self.order_line.filtered("is_downpayment").invoice_lines.move_id.mapped("l10n_mx_edi_cfdi_uuid")
+        return list(filter(lambda r: r, self.order_line.filtered("is_downpayment").invoice_lines.move_id.mapped("l10n_mx_edi_cfdi_uuid")))
 
     def _prepare_invoice(self):
         # ! Only for MX. We add the relations of the downpayments invoices.
