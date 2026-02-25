@@ -149,7 +149,7 @@ class SaleOrder(models.Model):
     def _prepare_invoice(self):
         # ! Only for MX. We add the relations of the downpayments invoices.
         vals = super()._prepare_invoice()
-        vals['l10n_mx_edi_cfdi_origin'] = f'07|{",".join(self._get_mexican_downpayment_cfdi_uuids())}' if self._get_mexican_downpayment_cfdi_uuids() else False
+        vals['l10n_mx_edi_cfdi_origin'] = f'07|{",".join(self._get_mexican_downpayment_cfdi_uuids())}' if self._get_mexican_downpayment_cfdi_uuids() else ''
         return vals
 
     def _get_invoiceable_lines(self, final=False):
