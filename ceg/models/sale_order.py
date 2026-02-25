@@ -142,6 +142,23 @@ class SaleOrder(models.Model):
                 'sticky': False,
             }
         }
+    
+    def _get_mexican_downpayment_cfdi_uuids(self):
+        return self.order_line.filtered("is_downpayment").invoice_lines.move_id.mapped("l10n_mx_edi_cfdi_uuid")
+
+    def _prepare_invoice(self):
+        # ! Only for MX. We add the relations of the downpayments invoices.
+        vals = super()._prepare_invoice()
+        vals['l10n_mx_edi_cfdi_origin'] = f'07|{",".join(self._get_mexican_downpayment_cfdi_uuids())}' if self._get_mexican_downpayment_cfdi_uuids() else False
+        return vals
+
+    def _get_invoiceable_lines(self, final=False):
+        # ! Only for MX. Downpayment lines are not invoiceable in negative CFDI Mexico, so we filter them out, we will relate them later.
+        return super()._get_invoiceable_lines(final=final).filtered(lambda line: not line.is_downpayment)
+
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        # ! Only for MX. We need to create the downpayment invoice first to get the CFDI UUID and relate it in the final invoice.
+        return super(SaleOrder, self.with_context(use_downpayment_account=self.order_line.filtered("is_downpayment").invoice_lines.account_id[:1].id))._create_invoices(grouped=grouped, final=final, date=date)
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 

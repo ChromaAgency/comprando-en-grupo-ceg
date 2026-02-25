@@ -2,6 +2,21 @@
 
 from odoo import models, api
 
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
+
+
+    def _compute_account_id(self):
+        use_downpayment_account = self.env.context.get('use_downpayment_account', False)
+        aml = super(AccountMoveLine, self.with_context(use_downpayment_account=use_downpayment_account))._compute_account_id()
+        if use_downpayment_account:
+            # Inspired from original _compute_account_id from @odoo/addons/account/models/account_move_line.py 
+            term_lines = self.filtered(lambda line: line.display_type == 'payment_term')
+            
+            for line in term_lines:
+                line.account_id = use_downpayment_account
+        return aml
+
 
 class AccountMove(models.Model):
     _inherit = ['account.move', 'magento.status.sender.mixin']
